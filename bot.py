@@ -2,21 +2,15 @@ import os
 import json
 
 from dotenv import load_dotenv
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           Filters, CallbackContext, CallbackQueryHandler,
                           ConversationHandler)
 
-from messages import create_start_message
+from messages import create_start_message_new_user, create_start_message_exist_user
 from general_functions import is_new_user
 
-CHOOSING, TYPING_REPLY, TYPING_CHOICE = range(3)
-
-reply_keyboard = [
-    ['👤 Имя и Фамилия', '📱 Номер телефона'],
-    ['Зарегистрироваться'],
-]
-markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+USER_FULLNAME, PHONE_NUMBER, END_AUTH = range(3)
 
 
 def facts_to_str(user_data) -> str:
@@ -25,73 +19,64 @@ def facts_to_str(user_data) -> str:
     return "\n".join(facts).join(['\n', '\n'])
 
 
-def start(update: Update, context: CallbackContext) -> None:
+def start(update: Update, context: CallbackContext) -> int:
     user = update.effective_user
 
     if is_new_user(user.id):
-        message_keyboard = [[
-            InlineKeyboardButton('✅ Согласен', callback_data='agree_user_agreement')
-        ]]
-        reply_markup = InlineKeyboardMarkup(message_keyboard)
+        message_keyboard = [['✅ Согласен', '❌ Не согласен']]
+        markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
 
         with open('documents/sample.pdf', 'rb') as image:
             user_agreement_pdf = image.read()
 
-        greeting_msg = create_start_message(user.name)
+        greeting_msg = create_start_message_new_user(user.name)
         update.message.reply_document(user_agreement_pdf, filename='Соглашение на обработку персональных данных.pdf',
-                                      caption=greeting_msg, reply_markup=reply_markup)
+                                      caption=greeting_msg, reply_markup=markup)
 
-        return CHOOSING
+        return USER_FULLNAME
+    else:
+        message_keyboard = [['Заказ', 'Личный кабинет']]
+        markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
 
-
-def button(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    query.answer()
-
-    if query.data == 'agree_user_agreement':
-        query.message.reply_text("Выберите опцию, которую хотите указать", reply_markup=markup)
+        menu_msg = create_start_message_exist_user(user.name)
+        update.message.reply_text(menu_msg, reply_markup=markup)
 
 
-def regular_choice(update: Update, context: CallbackContext) -> int:
-    text = update.message.text
-    context.user_data['choice'] = text
-    update.message.reply_text(f'{text.lower()}?')
+def get_fullname(update: Update, context: CallbackContext) -> int:
+    context.user_data['choice'] = 'Имя и фамилия'
+    update.message.reply_text(f'Введите имя и фамилию:')
 
-    return TYPING_REPLY
+    return PHONE_NUMBER
 
 
-def received_information(update: Update, context: CallbackContext) -> int:
+def get_phone_number(update: Update, context: CallbackContext) -> None:
     user_data = context.user_data
     text = update.message.text
     category = user_data['choice']
     user_data[category] = text
     del user_data['choice']
 
-    update.message.reply_text(
-        "Заполненные данные:"
-        f"{facts_to_str(user_data)}",
-        reply_markup=markup,
-    )
+    context.user_data['choice'] = 'Телефон'
+    update.message.reply_text(f'Введите телефон:')
 
-    return CHOOSING
+    return END_AUTH
 
 
-def done(update: Update, context: CallbackContext) -> int:
+def end_auth(update: Update, context: CallbackContext):
     user_data = context.user_data
+    text = update.message.text
+    category = user_data['choice']
+    user_data[category] = text
 
     if 'choice' in user_data:
         del user_data['choice']
 
-    if len(user_data) < 2:
-        update.message.reply_text('Вы указали не все данные для регистрации, попробуйте снова.')
-        return CHOOSING
-    else:
-        user_fullname = user_data['👤 Имя и Фамилия'].split()
+        user_fullname = user_data['Имя и фамилия'].split()
         if len(user_fullname) < 2:
-            update.message.reply_text('Вы не указали имя или фамилию, попробуйте снова.')
-            return CHOOSING
+            update.message.reply_text('Вы ввели не указали фамилию или имя, попробуйте снова.')
+            return USER_FULLNAME
 
-        user_phone_number = user_data['📱 Номер телефона']
+        user_phone_number = user_data['Телефон']
         user_id = update.effective_user.id
 
         user = {
@@ -110,13 +95,21 @@ def done(update: Update, context: CallbackContext) -> int:
         with open('json_files/users_order.json', 'w') as json_file:
             json.dump(database_without_new_user, json_file, indent=4, ensure_ascii=False)
 
+        message_keyboard = [['Заказ', 'Личный кабинет']]
+        markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
+
         update.message.reply_text(
-            f"Аккаунт создан!",
-            reply_markup=ReplyKeyboardRemove(),
+            f"Аккаунт создан!\n"
+            f"Выберите, что хотите сделать:",
+            reply_markup=markup,
         )
 
         user_data.clear()
         return ConversationHandler.END
+
+
+def cancel_auth(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Извините, тогда мы не сможем пропустить вас дальше')
 
 
 if __name__ == '__main__':
@@ -129,29 +122,28 @@ if __name__ == '__main__':
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            CHOOSING: [
+            USER_FULLNAME: [
                 MessageHandler(
-                    Filters.regex('^(👤 Имя и Фамилия|📱 Номер телефона)$'), regular_choice
+                    Filters.regex('^(✅ Согласен)$'), get_fullname
                 ),
             ],
-            TYPING_CHOICE: [
+            PHONE_NUMBER: [
                 MessageHandler(
-                    Filters.text & ~(Filters.command | Filters.regex('^Зарегистрироваться$')), regular_choice
+                    Filters.text, get_phone_number
                 )
             ],
-            TYPING_REPLY: [
+            END_AUTH: [
                 MessageHandler(
-                    Filters.text & ~(Filters.command | Filters.regex('^Зарегистрироваться$')),
-                    received_information,
+                    Filters.text, end_auth
                 )
-            ],
+            ]
         },
-        fallbacks=[MessageHandler(Filters.regex('^Зарегистрироваться$'), done)],
+        fallbacks=[MessageHandler(Filters.regex('^Стоп$'), start)],
     )
 
+    dispatcher.add_handler(MessageHandler(Filters.regex('^❌ Не согласен$'), cancel_auth))
     dispatcher.add_handler(conv_handler)
     dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CallbackQueryHandler(button))
 
     updater.start_polling()
     updater.idle()
