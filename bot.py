@@ -2,10 +2,9 @@ import os
 import json
 
 from dotenv import load_dotenv
-from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (Updater, CommandHandler, MessageHandler,
-                          Filters, CallbackContext, CallbackQueryHandler,
-                          ConversationHandler)
+                          Filters, CallbackContext, ConversationHandler)
 
 from messages import create_start_message_new_user, create_start_message_exist_user
 from general_functions import is_new_user
@@ -73,7 +72,7 @@ def end_auth(update: Update, context: CallbackContext):
 
         user_fullname = user_data['Имя и фамилия'].split()
         if len(user_fullname) < 2:
-            update.message.reply_text('Вы ввели не указали фамилию или имя, попробуйте снова.')
+            update.message.reply_text('Вы не указали фамилию или имя, попробуйте снова.')
             return USER_FULLNAME
 
         user_phone_number = user_data['Телефон']
@@ -109,7 +108,8 @@ def end_auth(update: Update, context: CallbackContext):
 
 
 def cancel_auth(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text('Извините, тогда мы не сможем пропустить вас дальше')
+    update.message.reply_text('Извините, тогда мы не сможем пропустить вас дальше. '
+                              'Чтобы изменить решение - напишите /start.')
 
 
 if __name__ == '__main__':
