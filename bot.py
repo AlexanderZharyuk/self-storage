@@ -1,7 +1,5 @@
 import os
-import textwrap
 
-import bot
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
@@ -12,10 +10,10 @@ from messages import create_start_message
 def start(update: Update, context: CallbackContext) -> None:
     user = update.effective_user
     with open('documents/sample.pdf', 'rb') as image:
-        test_image = image.read()
+        user_agreement_pdf = image.read()
 
     greeting_msg = create_start_message(user.name)
-    update.message.reply_document(test_image, filename='Соглашение на обработку персональных данных',
+    update.message.reply_document(user_agreement_pdf, filename='Соглашение на обработку персональных данных.pdf',
                                   caption=greeting_msg)
 
 
