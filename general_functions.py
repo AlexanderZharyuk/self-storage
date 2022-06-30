@@ -1,7 +1,7 @@
 import json
 
 
-def is_new_user(user_id: str) -> bool:
+def is_new_user(user_id: int) -> bool:
     """Функция возвращает True или False в зависимости от того - есть ли пользователь в базе данных"""
     with open('json_files/users_order.json', 'r') as file:
         users = json.load(file)
