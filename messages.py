@@ -1,4 +1,5 @@
-def create_start_message(username) -> str:
+def create_start_message(username: str) -> str:
+    """Здесь написан текст стартового сообщения для нового пользователя"""
     greeting_msg = f"""
 Привет, {username}!
     
