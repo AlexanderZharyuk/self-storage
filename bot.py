@@ -1,6 +1,8 @@
 import os
 import json
 
+from string import digits
+
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (Updater, CommandHandler, MessageHandler,
@@ -17,7 +19,7 @@ def start(update: Update, context: CallbackContext) -> int:
 
     if is_new_user(user.id):
         message_keyboard = [['✅ Согласен', '❌ Не согласен']]
-        markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
+        markup = ReplyKeyboardMarkup(message_keyboard, resize_keyboard=True)
 
         with open('documents/sample.pdf', 'rb') as image:
             user_agreement_pdf = image.read()
@@ -55,6 +57,11 @@ def get_phone_number(update: Update, context: CallbackContext):
     if len(user_fullname) < 2:
         update.message.reply_text('Вы не указали фамилию или имя, попробуйте снова.')
         return get_fullname(update, context)
+
+    for digit in digits:
+        if str(digit) in ' '.join(user_fullname):
+            update.message.reply_text('В имени или фамилии присутствуют цифры!')
+            return get_fullname(update, context)
 
     context.user_data['choice'] = 'Телефон'
     update.message.reply_text(f'Введите телефон:')
