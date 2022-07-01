@@ -7,15 +7,9 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           Filters, CallbackContext, ConversationHandler)
 
 from messages import create_start_message_new_user, create_start_message_exist_user
-from general_functions import is_new_user
+from general_functions import is_new_user, get_orders, get_orders_ids
 
-USER_FULLNAME, PHONE_NUMBER, END_AUTH = range(3)
-
-
-def facts_to_str(user_data) -> str:
-    facts = [f'{key} - {value}' for key, value in user_data.items()]
-
-    return "\n".join(facts).join(['\n', '\n'])
+USER_FULLNAME, PHONE_NUMBER, END_AUTH, PERSONAL_ACCOUNT, ORDERS, USER_BOXES = range(6)
 
 
 def start(update: Update, context: CallbackContext) -> int:
@@ -40,6 +34,8 @@ def start(update: Update, context: CallbackContext) -> int:
         menu_msg = create_start_message_exist_user(user.name)
         update.message.reply_text(menu_msg, reply_markup=markup)
 
+        return PERSONAL_ACCOUNT
+
 
 def get_fullname(update: Update, context: CallbackContext) -> int:
     context.user_data['choice'] = 'Имя и фамилия'
@@ -48,12 +44,17 @@ def get_fullname(update: Update, context: CallbackContext) -> int:
     return PHONE_NUMBER
 
 
-def get_phone_number(update: Update, context: CallbackContext) -> None:
+def get_phone_number(update: Update, context: CallbackContext):
     user_data = context.user_data
     text = update.message.text
     category = user_data['choice']
     user_data[category] = text
     del user_data['choice']
+
+    user_fullname = user_data['Имя и фамилия'].split()
+    if len(user_fullname) < 2:
+        update.message.reply_text('Вы не указали фамилию или имя, попробуйте снова.')
+        return get_fullname(update, context)
 
     context.user_data['choice'] = 'Телефон'
     update.message.reply_text(f'Введите телефон:')
@@ -94,22 +95,45 @@ def end_auth(update: Update, context: CallbackContext):
         with open('json_files/users_order.json', 'w') as json_file:
             json.dump(database_without_new_user, json_file, indent=4, ensure_ascii=False)
 
-        message_keyboard = [['Заказ', 'Личный кабинет']]
-        markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
-
-        update.message.reply_text(
-            f"Аккаунт создан!\n"
-            f"Выберите, что хотите сделать:",
-            reply_markup=markup,
-        )
-
         user_data.clear()
-        return ConversationHandler.END
+        return start(update, context)
 
 
 def cancel_auth(update: Update, context: CallbackContext) -> None:
     update.message.reply_text('Извините, тогда мы не сможем пропустить вас дальше. '
                               'Чтобы изменить решение - напишите /start.')
+    return ConversationHandler.END
+
+
+def personal_account(update: Update, context: CallbackContext):
+    message_keyboard = [['Посмотреть заказы', 'Выйти из личного кабинета']]
+    markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True,
+                                 resize_keyboard=True)
+    update.message.reply_text('Выберите, что хотите сделать:', reply_markup=markup)
+    return ORDERS
+
+
+def get_orders_list(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    orders_ids = get_orders_ids(user_id)
+    if orders_ids:
+        message_keyboard = [[f'Бокс #{order_id}'] for order_id in orders_ids]
+        markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
+        update.message.reply_text('Выберите заказ', reply_markup=markup)
+        return USER_BOXES
+    else:
+        message_keyboard = [['Выйти из личного кабинета']]
+        markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
+        update.message.reply_text('Вы еще не оформляли заказов.', reply_markup=markup)
+        return ORDERS
+
+
+def get_box_info(update: Update, context: CallbackContext):
+    message_keyboard = [['Вернуться к заказам', 'Выйти из личного кабинета']]
+    markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
+    order_id = update.message.text.split('#')[-1]
+    update.message.reply_text(f'Номер бокса: {order_id}', reply_markup=markup)
+    return ORDERS
 
 
 if __name__ == '__main__':
@@ -136,6 +160,27 @@ if __name__ == '__main__':
                 MessageHandler(
                     Filters.text, end_auth
                 )
+            ],
+            PERSONAL_ACCOUNT: [
+                MessageHandler(
+                    Filters.regex('^(Личный кабинет)$'), personal_account
+                )
+            ],
+            ORDERS: [
+                MessageHandler(
+                    Filters.regex('^(Посмотреть заказы)$'), get_orders_list
+                ),
+                MessageHandler(
+                    Filters.regex('^(Выйти из личного кабинета)$'), start
+                ),
+                MessageHandler(
+                    Filters.regex('^(Вернуться к заказам)$'), get_orders_list
+                ),
+            ],
+            USER_BOXES: [
+                MessageHandler(
+                    Filters.regex(r'Бокс #'), get_box_info
+                ),
             ]
         },
         fallbacks=[MessageHandler(Filters.regex('^Стоп$'), start)],
