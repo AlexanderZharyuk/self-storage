@@ -7,7 +7,7 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           Filters, CallbackContext, ConversationHandler)
 
 from messages import create_start_message_new_user, create_start_message_exist_user
-from general_functions import is_new_user, get_orders, get_orders_ids
+from general_functions import is_new_user, get_orders_ids, create_info_message
 
 USER_FULLNAME, PHONE_NUMBER, END_AUTH, PERSONAL_ACCOUNT, ORDERS, USER_BOXES = range(6)
 
