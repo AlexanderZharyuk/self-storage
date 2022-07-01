@@ -1,15 +1,15 @@
 import os
 import json
 
-from string import digits
+from string import digits, ascii_letters
 
 from dotenv import load_dotenv
-from telegram import Update, ReplyKeyboardMarkup
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           Filters, CallbackContext, ConversationHandler)
 
 from messages import create_start_message_new_user, create_start_message_exist_user, create_info_message
-from general_functions import is_new_user, get_orders_ids
+from general_functions import is_new_user, get_orders_ids, is_valid_phone_number
 
 USER_FULLNAME, PHONE_NUMBER, END_AUTH, PERSONAL_ACCOUNT, ORDERS, USER_BOXES = range(6)
 
@@ -64,14 +64,24 @@ def get_phone_number(update: Update, context: CallbackContext):
             return get_fullname(update, context)
 
     context.user_data['choice'] = 'Телефон'
-    update.message.reply_text(f'Введите телефон:')
+    message_keyboard = [[KeyboardButton('Поделиться контактом', request_contact=True)]]
+    markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
+    update.message.reply_text(f'Введите телефон в формате +7... или нажав на кнопку ниже:', reply_markup=markup)
 
     return END_AUTH
 
 
 def end_auth(update: Update, context: CallbackContext):
     user_data = context.user_data
-    text = update.message.text
+    if update.message.contact:
+        text = update.message.contact.phone_number
+    else:
+        text = update.message.text
+
+    if not is_valid_phone_number(text):
+        update.message.reply_text('В вашем телефоне найден запрещенный символ, либо длина телефона слишком мала.')
+        return get_phone_number(update, context)
+
     category = user_data['choice']
     user_data[category] = text
 
@@ -79,10 +89,6 @@ def end_auth(update: Update, context: CallbackContext):
         del user_data['choice']
 
         user_fullname = user_data['Имя и фамилия'].split()
-        if len(user_fullname) < 2:
-            update.message.reply_text('Вы не указали фамилию или имя, попробуйте снова.')
-            return USER_FULLNAME
-
         user_phone_number = user_data['Телефон']
         user_id = update.effective_user.id
 
@@ -168,6 +174,9 @@ if __name__ == '__main__':
             END_AUTH: [
                 MessageHandler(
                     Filters.text, end_auth
+                ),
+                MessageHandler(
+                    Filters.contact, end_auth
                 )
             ],
             PERSONAL_ACCOUNT: [
