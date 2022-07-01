@@ -9,7 +9,8 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           Filters, CallbackContext, ConversationHandler)
 
 from messages import create_start_message_new_user, create_start_message_exist_user, create_info_message
-from general_functions import is_new_user, get_orders_ids, is_valid_phone_number
+from general_functions import is_new_user, get_orders_ids, is_valid_phone_number, is_fullname_valid
+from validate_exceptions import *
 
 USER_FULLNAME, PHONE_NUMBER, END_AUTH, PERSONAL_ACCOUNT, ORDERS, USER_BOXES = range(6)
 
@@ -54,14 +55,14 @@ def get_phone_number(update: Update, context: CallbackContext):
     del user_data['choice']
 
     user_fullname = user_data['Имя и фамилия'].split()
-    if len(user_fullname) < 2:
+    try:
+        is_fullname_valid(user_fullname)
+    except NotFullName:
         update.message.reply_text('Вы не указали фамилию или имя, попробуйте снова.')
         return get_fullname(update, context)
-
-    for digit in digits:
-        if str(digit) in ' '.join(user_fullname):
-            update.message.reply_text('В имени или фамилии присутствуют цифры!')
-            return get_fullname(update, context)
+    except DigitsInName:
+        update.message.reply_text('В имени или фамилии присутствуют цифры!')
+        return get_fullname(update, context)
 
     context.user_data['choice'] = 'Телефон'
     message_keyboard = [[KeyboardButton('Поделиться контактом', request_contact=True)]]

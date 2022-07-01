@@ -1,6 +1,8 @@
 import json
 
-from string import ascii_letters
+from string import ascii_letters, digits
+
+from validate_exceptions import *
 
 
 def is_new_user(user_id: int) -> bool:
@@ -28,9 +30,22 @@ def get_orders_ids(user_id: int) -> list:
 
 
 def is_valid_phone_number(phone_number: str) -> bool:
+    """Проверка на валидность номера телефона"""
     russian_letters = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
     for number in phone_number:
         if number in ascii_letters or number in russian_letters:
             return False
 
     return len(phone_number) == 12
+
+
+def is_fullname_valid(fullname: list) -> bool:
+    """Проверка на валидность имени и фамилии"""
+    if len(fullname) < 2:
+        raise NotFullName
+
+    for digit in digits:
+        if str(digit) in ' '.join(fullname):
+            raise DigitsInName
+
+    return True
