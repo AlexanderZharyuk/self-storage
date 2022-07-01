@@ -7,7 +7,7 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           Filters, CallbackContext, ConversationHandler)
 
 from messages import create_start_message_new_user, create_start_message_exist_user
-from general_functions import is_new_user, get_orders, get_orders_ids
+from general_functions import is_new_user, get_orders_ids, create_info_message
 
 USER_FULLNAME, PHONE_NUMBER, END_AUTH, PERSONAL_ACCOUNT, ORDERS, USER_BOXES = range(6)
 
@@ -132,7 +132,9 @@ def get_box_info(update: Update, context: CallbackContext):
     message_keyboard = [['Вернуться к заказам', 'Выйти из личного кабинета']]
     markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
     order_id = update.message.text.split('#')[-1]
-    update.message.reply_text(f'Номер бокса: {order_id}', reply_markup=markup)
+    user_id = update.effective_user.id
+    info_message = create_info_message(order_id, user_id)
+    update.message.reply_text(info_message, reply_markup=markup)
     return ORDERS
 
 
