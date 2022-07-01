@@ -34,9 +34,12 @@ def is_valid_phone_number(phone_number: str) -> bool:
     russian_letters = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
     for number in phone_number:
         if number in ascii_letters or number in russian_letters:
-            return False
+            raise LetterInNumber
 
-    return len(phone_number) == 12
+    if len(phone_number) != 12:
+        raise NumberLength
+
+    return True
 
 
 def is_fullname_valid(fullname: list) -> bool:

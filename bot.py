@@ -79,8 +79,13 @@ def end_auth(update: Update, context: CallbackContext):
     else:
         text = update.message.text
 
-    if not is_valid_phone_number(text):
-        update.message.reply_text('В вашем телефоне найден запрещенный символ, либо длина телефона слишком мала.')
+    try:
+        is_valid_phone_number(text)
+    except LetterInNumber:
+        update.message.reply_text('В вашем телефоне найден запрещенный символ.')
+        return get_phone_number(update, context)
+    except NumberLength:
+        update.message.reply_text('Длина телефона слишком мала.')
         return get_phone_number(update, context)
 
     category = user_data['choice']
