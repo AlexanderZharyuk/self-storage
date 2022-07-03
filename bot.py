@@ -229,7 +229,7 @@ if __name__ == '__main__':
             ],
             USER_BOXES: [
                 MessageHandler(
-                    Filters.regex(r'Бокс #'), get_box_info
+                    Filters.regex(r'Заказ #'), get_box_info
                 ),
             ]
         },
