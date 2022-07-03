@@ -12,7 +12,7 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           Filters, CallbackContext, ConversationHandler,
                           CallbackQueryHandler)
 
-from messages import create_start_message_new_user, create_start_message_exist_user, create_info_message
+from messages import create_start_message_new_user, create_start_message_exist_user, create_info_message, create_info_message_for_qr
 from general_functions import is_new_user, get_orders_ids, is_valid_phone_number, is_fullname_valid
 from validate_exceptions import *
 
@@ -170,7 +170,7 @@ def publish_qr(update: Update, context: CallbackContext):
     query = update.callback_query
     order_id = query.data
     user_id = update.effective_user.id
-    info_message = create_info_message(order_id, user_id)
+    info_message = create_info_message_for_qr(order_id, user_id)
     qr_code = make_qr(info_message)
     query.message.reply_photo(qr_code, filename='QR')
 
