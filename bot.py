@@ -125,7 +125,7 @@ def cancel_auth(update: Update, context: CallbackContext) -> None:
 
 
 def personal_account(update: Update, context: CallbackContext):
-    message_keyboard = [['Посмотреть заказы', 'Выйти из личного кабинета']]
+    message_keyboard = [['Посмотреть заказы', 'Главное меню']]
     markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True,
                                  resize_keyboard=True)
     update.message.reply_text('Выберите, что хотите сделать:', reply_markup=markup)
@@ -148,7 +148,7 @@ def get_orders_list(update: Update, context: CallbackContext):
 
 
 def get_box_info(update: Update, context: CallbackContext):
-    message_keyboard = [['Вернуться к заказам', 'Выйти из личного кабинета']]
+    message_keyboard = [['Вернуться к заказам', 'Главное меню']]
     markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
     order_id = update.message.text.split('#')[-1]
     user_id = update.effective_user.id
@@ -195,7 +195,7 @@ if __name__ == '__main__':
                     Filters.regex('^(Посмотреть заказы)$'), get_orders_list
                 ),
                 MessageHandler(
-                    Filters.regex('^(Выйти из личного кабинета)$'), start
+                    Filters.regex('^(Главное меню)$'), start
                 ),
                 MessageHandler(
                     Filters.regex('^(Вернуться к заказам)$'), get_orders_list
