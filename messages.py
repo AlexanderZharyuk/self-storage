@@ -1,4 +1,4 @@
-from general_functions import get_orders
+from general_functions import get_orders, get_warehouse_address
 
 
 def create_start_message_new_user(username: str) -> str:
