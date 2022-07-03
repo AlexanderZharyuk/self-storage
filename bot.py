@@ -140,7 +140,7 @@ def get_orders_list(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     orders_ids = get_orders_ids(user_id)
     if orders_ids:
-        message_keyboard = [[f'Бокс #{order_id}'] for order_id in orders_ids]
+        message_keyboard = [[f'Заказ #{order_id}'] for order_id in orders_ids]
         markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
         update.message.reply_text('Выберите заказ', reply_markup=markup)
         return USER_BOXES
