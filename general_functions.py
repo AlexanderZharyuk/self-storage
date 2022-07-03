@@ -1,5 +1,9 @@
 import json
 
+from string import ascii_letters, digits
+
+from validate_exceptions import *
+
 
 def is_new_user(user_id: int) -> bool:
     """Функция возвращает True или False в зависимости от того - есть ли пользователь в базе данных"""
@@ -18,20 +22,33 @@ def get_orders(user_id: int) -> list:
     return user_orders
 
 
-def create_info_message(order_id, user_id):
-    orders = get_orders(user_id)[0]
-    for order in orders:
-        if order_id == order['order_id']:
-            warehouse_id = order['warehouse_id']
-            start_date = order['start_date']
-            end_date = order['end_date']
-            qr_code = order['qr_code']
-            message = f'Ваш бокс # {order_id} находится на складе {warehouse_id}. Срок хранения {start_date} - {end_date}. QR-code: {qr_code}.'
-    return message
-
-
-def get_orders_ids(user_id: int)-> list:
+def get_orders_ids(user_id: int) -> list:
     """Функция получения айди всех заказов пользователя"""
     orders = get_orders(user_id)[0]
     user_orders_id = [order['order_id'] for order in orders]
     return user_orders_id
+
+
+def is_valid_phone_number(phone_number: str) -> bool:
+    """Проверка на валидность номера телефона"""
+    russian_letters = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
+    for number in phone_number:
+        if number in ascii_letters or number in russian_letters:
+            raise LetterInNumber
+
+    if len(phone_number) != 12:
+        raise NumberLength
+
+    return True
+
+
+def is_fullname_valid(fullname: list) -> bool:
+    """Проверка на валидность имени и фамилии"""
+    if len(fullname) < 2:
+        raise NotFullName
+
+    for digit in digits:
+        if str(digit) in ' '.join(fullname):
+            raise DigitsInName
+
+    return True
