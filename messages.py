@@ -37,10 +37,12 @@ def create_info_message(order_id, user_id):
             box_id = order['box_id']
             address = get_warehouse_address(warehouse_id)
             message = f"""
-Ваш бокс #{order_id} находится на складе {warehouse_id} по адресу:
-{address}. 
+❗️ Ваш заказ #{order_id}
+📦 Бокс #{box_id} 
+🏚 Cклад #{warehouse_id} 
+🗺 Адрес {address}. 
 
-Срок хранения: {start_date} - {end_date}. 
-QR-код для получения: {qr_code}."""
+🕔 Срок хранения: 
+{start_date} - {end_date}"""
 
             return message
