@@ -61,3 +61,13 @@ def is_fullname_valid(fullname: list) -> bool:
             raise DigitsInName
 
     return True
+
+
+def get_warehouse_address(warehouse_id):
+    """Функция для получения адреса по номеру склада"""
+    with open('json_files/warehouses.json', 'r') as file:
+        warehouses = json.load(file)
+        for warehouse in warehouses:
+            if warehouse_id == warehouse['warehouse_id']:
+                address = warehouse['warehouse_address']
+                return address

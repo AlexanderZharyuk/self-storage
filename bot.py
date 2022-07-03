@@ -1,12 +1,16 @@
+import io
 import os
 import json
+import qrcode
 
 from dotenv import load_dotenv
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, \
+    InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (Updater, CommandHandler, MessageHandler,
-                          Filters, CallbackContext, ConversationHandler)
+                          Filters, CallbackContext, ConversationHandler,
+                          CallbackQueryHandler)
 
-from messages import create_start_message_new_user, create_start_message_exist_user, create_info_message
+from messages import create_start_message_new_user, create_start_message_exist_user, create_info_message, create_info_message_for_qr
 from general_functions import is_new_user, get_orders_ids, is_valid_phone_number, is_fullname_valid, clear_phone_number
 from validate_exceptions import *
 
@@ -129,7 +133,7 @@ def cancel_auth(update: Update, context: CallbackContext) -> None:
 
 
 def personal_account(update: Update, context: CallbackContext):
-    message_keyboard = [['Посмотреть заказы', 'Выйти из личного кабинета']]
+    message_keyboard = [['Посмотреть заказы', 'Главное меню']]
     markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True,
                                  resize_keyboard=True)
     update.message.reply_text('Выберите, что хотите сделать:', reply_markup=markup)
@@ -140,7 +144,7 @@ def get_orders_list(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     orders_ids = get_orders_ids(user_id)
     if orders_ids:
-        message_keyboard = [[f'Бокс #{order_id}'] for order_id in orders_ids]
+        message_keyboard = [[f'Заказ #{order_id}'] for order_id in orders_ids]
         markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
         update.message.reply_text('Выберите заказ', reply_markup=markup)
         return USER_BOXES
@@ -152,13 +156,35 @@ def get_orders_list(update: Update, context: CallbackContext):
 
 
 def get_box_info(update: Update, context: CallbackContext):
-    message_keyboard = [['Вернуться к заказам', 'Выйти из личного кабинета']]
+    message_keyboard = [['Вернуться к заказам', 'Главное меню']]
     markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
     order_id = update.message.text.split('#')[-1]
     user_id = update.effective_user.id
     info_message = create_info_message(order_id, user_id)
     update.message.reply_text(info_message, reply_markup=markup)
+
+    button = InlineKeyboardButton("QR", callback_data=order_id)
+    reply_markup_qr = InlineKeyboardMarkup([[button]])
+    update.message.reply_text('Нажмите, чтобы получить QR-code', reply_markup=reply_markup_qr)
+
     return ORDERS
+
+
+def publish_qr(update: Update, context: CallbackContext):
+    query = update.callback_query
+    order_id = query.data
+    user_id = update.effective_user.id
+    info_message = create_info_message_for_qr(order_id, user_id)
+    qr_code = make_qr(info_message)
+    query.message.reply_photo(qr_code, filename='QR')
+
+
+def make_qr(order_info):
+    qr_code = qrcode.make(order_info)
+    img_byte_arr = io.BytesIO()
+    qr_code.save(img_byte_arr, format='PNG')
+    img_byte_arr = img_byte_arr.getvalue()
+    return img_byte_arr
 
 
 if __name__ == '__main__':
@@ -199,7 +225,7 @@ if __name__ == '__main__':
                     Filters.regex('^(Посмотреть заказы)$'), get_orders_list
                 ),
                 MessageHandler(
-                    Filters.regex('^(Выйти из личного кабинета)$'), start
+                    Filters.regex('^(Главное меню)$'), start
                 ),
                 MessageHandler(
                     Filters.regex('^(Вернуться к заказам)$'), get_orders_list
@@ -207,7 +233,7 @@ if __name__ == '__main__':
             ],
             USER_BOXES: [
                 MessageHandler(
-                    Filters.regex(r'Бокс #'), get_box_info
+                    Filters.regex(r'Заказ #'), get_box_info
                 ),
             ]
         },
@@ -217,6 +243,7 @@ if __name__ == '__main__':
     dispatcher.add_handler(MessageHandler(Filters.regex('^❌ Не согласен$'), cancel_auth))
     dispatcher.add_handler(conv_handler)
     dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CallbackQueryHandler(publish_qr))
 
     updater.start_polling()
     updater.idle()
