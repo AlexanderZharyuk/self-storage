@@ -166,6 +166,23 @@ def get_box_info(update: Update, context: CallbackContext):
     return ORDERS
 
 
+def publish_qr(update: Update, context: CallbackContext):
+    query = update.callback_query
+    order_id = query.data
+    user_id = update.effective_user.id
+    info_message = create_info_message(order_id, user_id)
+    qr_code = make_qr(info_message)
+    query.message.reply_photo(qr_code, filename='QR')
+
+
+def make_qr(order_info):
+    qr_code = qrcode.make(order_info)
+    img_byte_arr = io.BytesIO()
+    qr_code.save(img_byte_arr, format='PNG')
+    img_byte_arr = img_byte_arr.getvalue()
+    return img_byte_arr
+
+
 if __name__ == '__main__':
     load_dotenv()
     telegram_bot_token = os.environ['TELEGRAM_TOKEN']
