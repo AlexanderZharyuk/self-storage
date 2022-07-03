@@ -46,3 +46,22 @@ def create_info_message(order_id, user_id):
 {start_date} - {end_date}"""
 
             return message
+
+
+def create_info_message_for_qr(order_id, user_id):
+    """Здесь создается сообщение с информацией о боксе для формирования qr-code"""
+    orders = get_orders(user_id)[0]
+    for order in orders:
+        if int(order_id) == order['order_id']:
+            warehouse_id = order['warehouse_id']
+            start_date = order['start_date']
+            end_date = order['end_date']
+            box_id = order['box_id']
+            message = f"""
+            Order id: {order_id}
+            Box id: {box_id}
+            Warehouse id: {warehouse_id}
+            Start date: {start_date}
+            End date: {end_date}"""
+
+            return message
