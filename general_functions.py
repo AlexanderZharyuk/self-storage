@@ -29,15 +29,24 @@ def get_orders_ids(user_id: int) -> list:
     return user_orders_id
 
 
+def clear_phone_number(phone_number: str) -> str:
+    """Функция очищает номер телефона от лишних симоволов"""
+    numbers_in_phone = [number for number in phone_number if number in digits]
+    phone_without_symbols = "".join(numbers_in_phone)
+    if phone_without_symbols.startswith('7'):
+        return f'+{phone_without_symbols}'
+    else:
+        raise NotCorrectStartNumber
+
+
 def is_valid_phone_number(phone_number: str) -> bool:
     """Проверка на валидность номера телефона"""
-    russian_letters = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'
-    for number in phone_number:
-        if number in ascii_letters or number in russian_letters:
-            raise LetterInNumber
+    cleared_phone_number = clear_phone_number(phone_number)
 
-    if len(phone_number) != 12:
-        raise NumberLength
+    if len(cleared_phone_number) > 12:
+        raise NumberLengthTooLong
+    elif len(cleared_phone_number) < 12:
+        raise NumberLengthTooShort
 
     return True
 

@@ -3,8 +3,6 @@ import os
 import json
 import qrcode
 
-from string import digits, ascii_letters
-
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, \
     InlineKeyboardMarkup, InlineKeyboardButton
@@ -13,7 +11,7 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           CallbackQueryHandler)
 
 from messages import create_start_message_new_user, create_start_message_exist_user, create_info_message, create_info_message_for_qr
-from general_functions import is_new_user, get_orders_ids, is_valid_phone_number, is_fullname_valid
+from general_functions import is_new_user, get_orders_ids, is_valid_phone_number, is_fullname_valid, clear_phone_number
 from validate_exceptions import *
 
 USER_FULLNAME, PHONE_NUMBER, END_AUTH, PERSONAL_ACCOUNT, ORDERS, USER_BOXES = range(6)
@@ -69,7 +67,7 @@ def get_phone_number(update: Update, context: CallbackContext):
         return get_fullname(update, context)
 
     context.user_data['choice'] = 'Телефон'
-    message_keyboard = [[KeyboardButton('Поделиться контактом', request_contact=True)]]
+    message_keyboard = [[KeyboardButton('Отправить свой номер телефона', request_contact=True)]]
     markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
     update.message.reply_text(f'Введите телефон в формате +7... или нажав на кнопку ниже:', reply_markup=markup)
 
@@ -88,8 +86,14 @@ def end_auth(update: Update, context: CallbackContext):
     except LetterInNumber:
         update.message.reply_text('В вашем телефоне найден запрещенный символ.')
         return get_phone_number(update, context)
-    except NumberLength:
+    except NumberLengthTooShort:
         update.message.reply_text('Длина телефона слишком мала.')
+        return get_phone_number(update, context)
+    except NumberLengthTooLong:
+        update.message.reply_text('Длина телефона слишком большая.')
+        return get_phone_number(update, context)
+    except NotCorrectStartNumber:
+        update.message.reply_text('Номер начинается не на +7...')
         return get_phone_number(update, context)
 
     category = user_data['choice']
@@ -99,7 +103,7 @@ def end_auth(update: Update, context: CallbackContext):
         del user_data['choice']
 
         user_fullname = user_data['Имя и фамилия'].split()
-        user_phone_number = user_data['Телефон']
+        user_phone_number = clear_phone_number(user_data['Телефон'])
         user_id = update.effective_user.id
 
         user = {

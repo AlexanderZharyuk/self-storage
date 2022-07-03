@@ -16,7 +16,19 @@ class LetterInNumber(Exception):
         return 'В номере есть буква'
 
 
-class NumberLength(Exception):
+class NumberLengthTooLong(Exception):
 
     def __str__(self):
-        return 'Слишком маленький или длинный номер'
+        return 'Слишком длинный номер'
+
+
+class NumberLengthTooShort(Exception):
+
+    def __str__(self):
+        return 'Слишком короткий номер'
+
+
+class NotCorrectStartNumber(Exception):
+
+    def __str__(self):
+        return 'Номер начинается не с +7'
