@@ -1,12 +1,16 @@
+import io
 import os
 import json
+import qrcode
 
 from string import digits, ascii_letters
 
 from dotenv import load_dotenv
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, \
+    InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (Updater, CommandHandler, MessageHandler,
-                          Filters, CallbackContext, ConversationHandler)
+                          Filters, CallbackContext, ConversationHandler,
+                          CallbackQueryHandler)
 
 from messages import create_start_message_new_user, create_start_message_exist_user, create_info_message
 from general_functions import is_new_user, get_orders_ids, is_valid_phone_number, is_fullname_valid
