@@ -239,6 +239,7 @@ if __name__ == '__main__':
     dispatcher.add_handler(MessageHandler(Filters.regex('^❌ Не согласен$'), cancel_auth))
     dispatcher.add_handler(conv_handler)
     dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CallbackQueryHandler(publish_qr))
 
     updater.start_polling()
     updater.idle()
