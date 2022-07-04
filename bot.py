@@ -163,7 +163,7 @@ def get_box_info(update: Update, context: CallbackContext):
 
     button = InlineKeyboardButton("QR", callback_data=order_id)
     reply_markup_qr = InlineKeyboardMarkup([[button]])
-    update.message.reply_text('Нажмите, чтобы получить QR-code', reply_markup=reply_markup_qr)
+    update.message.reply_text(info_message, reply_markup=reply_markup_qr)
 
     return ORDERS
 
