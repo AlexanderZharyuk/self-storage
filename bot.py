@@ -242,7 +242,7 @@ if __name__ == '__main__':
                 ),
                 MessageHandler(
                     Filters.regex('^(Личный кабинет)$'), personal_account
-                ),
+                )
             ]
         },
         fallbacks=[MessageHandler(Filters.regex('^Стоп$'), start)],
