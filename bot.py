@@ -150,7 +150,7 @@ def get_orders_list(update: Update, context: CallbackContext):
         update.message.reply_text('Выберите заказ', reply_markup=markup)
         return USER_BOXES
     else:
-        message_keyboard = [['Выйти из личного кабинета']]
+        message_keyboard = [['Главное меню']]
         markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
         update.message.reply_text('Вы еще не оформляли заказов.', reply_markup=markup)
         return ORDERS
