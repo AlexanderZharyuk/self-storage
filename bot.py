@@ -357,7 +357,7 @@ if __name__ == '__main__':
                 ),
                 MessageHandler(
                     Filters.regex('^(Личный кабинет)$'), personal_account
-                ),
+                )
             ],
             CREATE_ORDER: [
                 CallbackQueryHandler(order_create)
