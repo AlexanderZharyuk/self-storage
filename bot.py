@@ -145,7 +145,8 @@ def get_orders_list(update: Update, context: CallbackContext):
     orders_ids = get_orders_ids(user_id)
     if orders_ids:
         message_keyboard = [[f'Заказ #{order_id}'] for order_id in orders_ids]
-        markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
+        message_keyboard.append(['Личный кабинет'])
+        markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=False, resize_keyboard=True)
         update.message.reply_text('Выберите заказ', reply_markup=markup)
         return USER_BOXES
     else:
@@ -234,6 +235,9 @@ if __name__ == '__main__':
             USER_BOXES: [
                 MessageHandler(
                     Filters.regex(r'Заказ #'), get_box_info
+                ),
+                MessageHandler(
+                    Filters.regex('^(Личный кабинет)$'), personal_account
                 ),
             ]
         },
