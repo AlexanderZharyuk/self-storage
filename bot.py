@@ -157,12 +157,9 @@ def get_orders_list(update: Update, context: CallbackContext):
 
 
 def get_box_info(update: Update, context: CallbackContext):
-    message_keyboard = [['Вернуться к заказам', 'Главное меню']]
-    markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
     order_id = update.message.text.split('#')[-1]
     user_id = update.effective_user.id
     info_message = create_info_message(order_id, user_id)
-    update.message.reply_text(info_message, reply_markup=markup)
 
     button = InlineKeyboardButton("QR", callback_data=order_id)
     reply_markup_qr = InlineKeyboardMarkup([[button]])
