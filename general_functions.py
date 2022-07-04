@@ -129,3 +129,20 @@ def add_new_user_order(user_id: int, order_params: dict):
 
     with open('json_files/users_order.json', 'w', encoding="utf-8") as json_file:
         json.dump(users, json_file, indent=4, ensure_ascii=False)
+    
+    reserve_box_in_warehouse(order_params)
+
+
+def reserve_box_in_warehouse(order_params: dict):
+    """Функция помечает оплаченный пользователем бокс как зарезервированный"""
+    with open('json_files/warehouses.json', 'r', encoding='utf-8') as json_file:
+        warehouses = json.load(json_file)
+
+    for warehouse in warehouses:
+        if warehouse['warehouse_id'] == order_params['warehouse_id']:
+            for box in warehouse['boxes']:
+                if box['box_id'] == order_params['box_id']:
+                    box.update({'box_reserved': True})
+
+    with open('json_files/warehouses.json', 'w', encoding="utf-8") as json_file:
+        json.dump(warehouses, json_file, indent=4, ensure_ascii=False)
