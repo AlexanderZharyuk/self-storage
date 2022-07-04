@@ -147,27 +147,25 @@ def get_orders_list(update: Update, context: CallbackContext):
     orders_ids = get_orders_ids(user_id)
     if orders_ids:
         message_keyboard = [[f'Заказ #{order_id}'] for order_id in orders_ids]
-        markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
+        message_keyboard.append(['Личный кабинет'])
+        markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=False, resize_keyboard=True)
         update.message.reply_text('Выберите заказ', reply_markup=markup)
         return USER_BOXES
     else:
-        message_keyboard = [['Выйти из личного кабинета']]
+        message_keyboard = [['Главное меню']]
         markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
         update.message.reply_text('Вы еще не оформляли заказов.', reply_markup=markup)
         return ORDERS
 
 
 def get_box_info(update: Update, context: CallbackContext):
-    message_keyboard = [['Вернуться к заказам', 'Главное меню']]
-    markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
     order_id = update.message.text.split('#')[-1]
     user_id = update.effective_user.id
     info_message = create_info_message(order_id, user_id)
-    update.message.reply_text(info_message, reply_markup=markup)
 
     button = InlineKeyboardButton("QR", callback_data=order_id)
     reply_markup_qr = InlineKeyboardMarkup([[button]])
-    update.message.reply_text('Нажмите, чтобы получить QR-code', reply_markup=reply_markup_qr)
+    update.message.reply_text(info_message, reply_markup=reply_markup_qr)
 
     return ORDERS
 
@@ -179,6 +177,7 @@ def publish_qr(update: Update, context: CallbackContext):
     info_message = create_info_message_for_qr(order_id, user_id)
     qr_code = make_qr(info_message)
     query.message.reply_photo(qr_code, filename='QR')
+    return USER_BOXES
 
 
 def make_qr(order_info):
@@ -345,10 +344,19 @@ if __name__ == '__main__':
                 MessageHandler(
                     Filters.regex('^(Вернуться к заказам)$'), get_orders_list
                 ),
+                MessageHandler(
+                    Filters.regex('^(Личный кабинет)$'), personal_account
+                ),
+                MessageHandler(
+                    Filters.regex(r'Заказ #'), get_box_info
+                ),
             ],
             USER_BOXES: [
                 MessageHandler(
                     Filters.regex(r'Заказ #'), get_box_info
+                ),
+                MessageHandler(
+                    Filters.regex('^(Личный кабинет)$'), personal_account
                 ),
             ],
             CREATE_ORDER: [
