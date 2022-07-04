@@ -2,6 +2,8 @@ import io
 import os
 import json
 import qrcode
+import calendar
+from datetime import date, timedelta
 
 from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, \
@@ -10,11 +12,11 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           Filters, CallbackContext, ConversationHandler,
                           CallbackQueryHandler)
 
-from messages import create_start_message_new_user, create_start_message_exist_user, create_info_message, create_info_message_for_qr
-from general_functions import is_new_user, get_orders_ids, is_valid_phone_number, is_fullname_valid, clear_phone_number
+from messages import create_start_message_new_user, create_start_message_exist_user, create_info_message, create_info_message_for_qr, create_boxes_list_message, create_show_user_order_message
+from general_functions import is_new_user, get_orders_ids, is_valid_phone_number, is_fullname_valid, clear_phone_number, get_warehouses_address, get_warehouses_boxes, get_box_floor, add_new_user_order
 from validate_exceptions import *
 
-USER_FULLNAME, PHONE_NUMBER, END_AUTH, PERSONAL_ACCOUNT, ORDERS, USER_BOXES = range(6)
+USER_FULLNAME, PHONE_NUMBER, END_AUTH, PERSONAL_ACCOUNT, ORDERS, USER_BOXES, CREATE_ORDER = range(7)
 
 
 def start(update: Update, context: CallbackContext) -> int:
@@ -114,12 +116,12 @@ def end_auth(update: Update, context: CallbackContext):
             "orders": []
         }
 
-        with open('json_files/users_order.json', 'r') as json_file:
+        with open('json_files/users_order.json', 'r', encoding="utf-8") as json_file:
             database_without_new_user = json.load(json_file)
 
         database_without_new_user.append(user)
 
-        with open('json_files/users_order.json', 'w') as json_file:
+        with open('json_files/users_order.json', 'w', encoding="utf-8") as json_file:
             json.dump(database_without_new_user, json_file, indent=4, ensure_ascii=False)
 
         user_data.clear()
@@ -186,6 +188,116 @@ def make_qr(order_info):
     return img_byte_arr
 
 
+def order_select_warehouse(update: Update, context: CallbackContext) -> int:
+    query = update.callback_query
+    if query:
+        query.answer()
+
+    warehouses_address = get_warehouses_address()
+    msg_text = '🏠 Выберите расположение ближайшего для вас склада:\n'
+    keyboard = [[]]
+    for warehouse in warehouses_address:
+           msg_text = msg_text + warehouse['warehouse_id'] + ') ' +  warehouse['warehouse_address'] + '\n'
+           keyboard[0].append(InlineKeyboardButton(warehouse['warehouse_id'], callback_data=str('warehouse_id:' + warehouse['warehouse_id'])),)
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    if query:
+        query.edit_message_text(text=msg_text, reply_markup=reply_markup)
+    else:
+        update.message.reply_text(msg_text, reply_markup=reply_markup)
+    
+    return CREATE_ORDER
+
+def order_create(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+    
+    object, id = query.data.split(':')
+    context.user_data[object] = id
+
+    if object=='warehouse_id':
+        msg_text = 'Выберите необходимый размер бокса:\n'
+        keyboard = [
+            [
+                InlineKeyboardButton("3 м2", callback_data=str('box_size:0')),
+                InlineKeyboardButton("10 м2", callback_data=str('box_size:1')),
+                InlineKeyboardButton("более 10 м2", callback_data=str('box_size:2'))
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text(text=msg_text, reply_markup=reply_markup)
+    
+    elif object=='box_size':
+        msg_text = 'Вы собираетесь хранить специфические вещи (различные легковоспоменяющиеся жидкости, крупногабаритные и т.п.)?\n'
+        keyboard = [
+                    [
+                        InlineKeyboardButton("Нет ❌", callback_data=str('box_type:0')),
+                        InlineKeyboardButton("Да ✅", callback_data=str('box_type:1'))
+                    ]
+                ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text(text=msg_text, reply_markup=reply_markup)
+    
+    elif object=='box_type':
+        boxes = get_warehouses_boxes(context.user_data)
+        msg_text = create_boxes_list_message(boxes)
+        keyboard = [[]]
+        for box in boxes:
+            keyboard[0].append(InlineKeyboardButton(box['box_id'], callback_data=str('box_id:' + box['box_id'])),)
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text(text=msg_text, reply_markup=reply_markup)
+        if not boxes:
+            context.user_data.clear()
+            return PERSONAL_ACCOUNT
+    
+    elif object=='box_id':
+        context.user_data['box_floor'] = get_box_floor(context.user_data)
+        msg_text = '⏱️ На какой срок вы хотите арендовать бокс?\n'
+        keyboard = [
+                    [
+                        InlineKeyboardButton("1 месяц", callback_data=str('order_time:1')),
+                        InlineKeyboardButton("3 месяца", callback_data=str('order_time:3')),
+                        InlineKeyboardButton("6 месяцев", callback_data=str('order_time:6')),
+                        InlineKeyboardButton("12 месяцев", callback_data=str('order_time:12')),
+                    ]
+                ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text(text=msg_text, reply_markup=reply_markup)
+
+    elif object=='order_time':
+        today = date.today()
+        days = calendar.monthrange(today.year, today.month)[1]
+        end_date = today + timedelta(days=days * int(id))
+        context.user_data['start_date'] = "{}/{}/{}".format(today.year, today.month, today.day)
+        context.user_data['end_date'] = "{}/{}/{}".format(end_date.year, end_date.month, end_date.day)
+    
+        msg_text = create_show_user_order_message(context.user_data)
+        keyboard = [
+                    [
+                        InlineKeyboardButton("Изменить", callback_data=str('change_order:1')),
+                        InlineKeyboardButton("Подтвердить", callback_data=str('order_make_payment:1')),
+                    ]
+                ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        query.edit_message_text(text=msg_text, reply_markup=reply_markup)
+    
+    elif object=='change_order':
+        context.user_data.clear()
+        order_select_warehouse(update, context)
+
+    elif object=='order_make_payment':
+        query.message.reply_text('Ваш заказ принят.\nВ ближайшее время с вами свяжется менеджер 📞\nСпасибо, что доверяете нам свои вещи!')
+        #
+        # Code for order payment
+        #
+
+        # Save payment order to json
+        user_id = update.effective_user.id
+        add_new_user_order(user_id, context.user_data)
+        context.user_data.clear()
+        return PERSONAL_ACCOUNT
+    return CREATE_ORDER
+
 if __name__ == '__main__':
     load_dotenv()
     telegram_bot_token = os.environ['TELEGRAM_TOKEN']
@@ -216,6 +328,9 @@ if __name__ == '__main__':
             ],
             PERSONAL_ACCOUNT: [
                 MessageHandler(
+                    Filters.regex('^(Заказ)$'), order_select_warehouse
+                ),
+                MessageHandler(
                     Filters.regex('^(Личный кабинет)$'), personal_account
                 )
             ],
@@ -243,6 +358,9 @@ if __name__ == '__main__':
                 MessageHandler(
                     Filters.regex('^(Личный кабинет)$'), personal_account
                 )
+            ],
+            CREATE_ORDER: [
+                CallbackQueryHandler(order_create)
             ]
         },
         fallbacks=[MessageHandler(Filters.regex('^Стоп$'), start)],

@@ -1,263 +1,242 @@
 [
-  {
-    "warehouse_id": "1",
-    "warehouse_address": "Москва, ул. Кремлёвская набережная, 10",
-    "floors": [
-      {
+    {
+        "warehouse_id": "1",
+        "warehouse_address": "Москва, ул. Кремлёвская набережная, 10",
         "boxes": [
-          {
-            "box_id": "11",
-            "box_size": "3",
-            "box_type": "0",
-            "box_price": "100",
-            "box_reserved": false
-          },
-          {
-            "box_id": "13",
-            "box_size": "15",
-            "box_type": "1",
-            "box_price": "1000",
-            "box_reserved": false
-          }
+            {
+                "box_id": "11",
+                "box_floor": "1",
+                "box_size": "0",
+                "box_type": "0",
+                "box_price": "100",
+                "box_reserved": false
+            },
+            {
+                "box_id": "13",
+                "box_floor": "1",
+                "box_size": "2",
+                "box_type": "1",
+                "box_price": "1000",
+                "box_reserved": false
+            },
+            {
+                "box_id": "22",
+                "box_floor": "2",
+                "box_size": "2",
+                "box_type": "0",
+                "box_price": "500",
+                "box_reserved": false
+            },
+            {
+                "box_id": "27",
+                "box_floor": "2",
+                "box_size": "0",
+                "box_type": "1",
+                "box_price": "100",
+                "box_reserved": false
+            },
+            {
+                "box_id": "33",
+                "box_floor": "3",
+                "box_size": "2",
+                "box_type": "1",
+                "box_price": "1000",
+                "box_reserved": false
+            },
+            {
+                "box_id": "39",
+                "box_floor": "3",
+                "box_size": "1",
+                "box_type": "1",
+                "box_price": "500",
+                "box_reserved": false
+            }
         ]
-      },
-      {
+    },
+    {
+        "warehouse_id": "2",
+        "warehouse_address": "Москва, Красный проспект, 16",
         "boxes": [
-          {
-            "box_id": "22",
-            "box_size": "10",
-            "box_type": "0",
-            "box_price": "500",
-            "box_reserved": false
-          },
-          {
-            "box_id": "27",
-            "box_size": "3",
-            "box_type": "0",
-            "box_price": "100",
-            "box_reserved": false
-          }
+            {
+                "box_id": "15",
+                "box_floor": "1",
+                "box_size": "0",
+                "box_type": "0",
+                "box_price": "100",
+                "box_reserved": true
+            },
+            {
+                "box_id": "17",
+                "box_floor": "1",
+                "box_size": "1",
+                "box_type": "1",
+                "box_price": "500",
+                "box_reserved": false
+            },
+            {
+                "box_id": "24",
+                "box_floor": "2",
+                "box_size": "2",
+                "box_type": "1",
+                "box_price": "1000",
+                "box_reserved": false
+            },
+            {
+                "box_id": "28",
+                "box_floor": "2",
+                "box_size": "1",
+                "box_type": "1",
+                "box_price": "500",
+                "box_reserved": true
+            },
+            {
+                "box_id": "31",
+                "box_floor": "3",
+                "box_size": "0",
+                "box_type": "0",
+                "box_price": "100",
+                "box_reserved": false
+            },
+            {
+                "box_id": "36",
+                "box_floor": "3",
+                "box_size": "2",
+                "box_type": "0",
+                "box_price": "1000",
+                "box_reserved": false
+            }
         ]
-      },
-      {
+    },
+    {
+        "warehouse_id": "3",
+        "warehouse_address": "Москва, ул. Пушкинская, 56",
         "boxes": [
-          {
-            "box_id": "33",
-            "box_size": "15",
-            "box_type": "1",
-            "box_price": "1000",
-            "box_reserved": false
-          },
-          {
-            "box_id": "39",
-            "box_size": "10",
-            "box_type": "1",
-            "box_price": "500",
-            "box_reserved": false
-          }
+            {
+                "box_id": "12",
+                "box_floor": "1",
+                "box_size": "1",
+                "box_type": "0",
+                "box_price": "500",
+                "box_reserved": false
+            },
+            {
+                "box_id": "18",
+                "box_floor": "1",
+                "box_size": "0",
+                "box_type": "1",
+                "box_price": "100",
+                "box_reserved": false
+            },
+            {
+                "box_id": "22",
+                "box_floor": "2",
+                "box_size": "2",
+                "box_type": "0",
+                "box_price": "1000",
+                "box_reserved": false
+            },
+            {
+                "box_id": "27",
+                "box_floor": "2",
+                "box_size": "0",
+                "box_type": "1",
+                "box_price": "100",
+                "box_reserved": false
+            },
+            {
+                "box_id": "36",
+                "box_floor": "3",
+                "box_size": "0",
+                "box_type": "0",
+                "box_price": "100",
+                "box_reserved": false
+            },
+            {
+                "box_id": "38",
+                "box_floor": "3",
+                "box_size": "2",
+                "box_type": "1",
+                "box_price": "1000",
+                "box_reserved": false
+            },
+            {
+                "box_id": "39",
+                "box_floor": "3",
+                "box_size": "1",
+                "box_type": "1",
+                "box_price": "500",
+                "box_reserved": false
+            }
         ]
-      }
-    ]
-  },
-  {
-    "warehouse_id": "2",
-    "warehouse_address": "Москва, Красный проспект, 16",
-    "floors": [
-      {
+    },
+    {
+        "warehouse_id": "4",
+        "warehouse_address": "Москва, ул. Тверская, 8",
         "boxes": [
-          {
-            "box_id": "15",
-            "box_size": "3",
-            "box_type": "0",
-            "box_price": "100",
-            "box_reserved": false
-          },
-          {
-            "box_id": "17",
-            "box_size": "10",
-            "box_type": "1",
-            "box_price": "500",
-            "box_reserved": false
-          }
+            {
+                "box_id": "14",
+                "box_floor": "1",
+                "box_size": "2",
+                "box_type": "0",
+                "box_price": "1000",
+                "box_reserved": false
+            },
+            {
+                "box_id": "17",
+                "box_floor": "1",
+                "box_size": "0",
+                "box_type": "0",
+                "box_price": "100",
+                "box_reserved": false
+            },
+            {
+                "box_id": "23",
+                "box_floor": "2",
+                "box_size": "1",
+                "box_type": "1",
+                "box_price": "500",
+                "box_reserved": false
+            },
+            {
+                "box_id": "24",
+                "box_floor": "2",
+                "box_size": "0",
+                "box_type": "0",
+                "box_price": "100",
+                "box_reserved": false
+            },
+            {
+                "box_id": "25",
+                "box_floor": "2",
+                "box_size": "2",
+                "box_type": "1",
+                "box_price": "1000",
+                "box_reserved": false
+            },
+            {
+                "box_id": "33",
+                "box_floor": "3",
+                "box_size": "0",
+                "box_type": "0",
+                "box_price": "100",
+                "box_reserved": false
+            },
+            {
+                "box_id": "35",
+                "box_floor": "3",
+                "box_size": "2",
+                "box_type": "1",
+                "box_price": "1000",
+                "box_reserved": false
+            },
+            {
+                "box_id": "37",
+                "box_floor": "3",
+                "box_size": "1",
+                "box_type": "1",
+                "box_price": "500",
+                "box_reserved": false
+            }
         ]
-      },
-      {
-        "boxes": [
-          {
-            "box_id": "24",
-            "box_size": "16",
-            "box_type": "1",
-            "box_price": "1000",
-            "box_reserved": false
-          },
-          {
-            "box_id": "28",
-            "box_size": "10",
-            "box_type": "1",
-            "box_price": "500",
-            "box_reserved": false
-          }
-        ]
-      },
-      {
-        "boxes": [
-          {
-            "box_id": "31",
-            "box_size": "3",
-            "box_type": "0",
-            "box_price": "100",
-            "box_reserved": false
-          },
-          {
-            "box_id": "36",
-            "box_size": "14",
-            "box_type": "0",
-            "box_price": "1000",
-            "box_reserved": false
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "warehouse_id": "3",
-    "warehouse_address": "Москва, ул. Пушкинская, 56",
-    "floors": [
-      {
-        "boxes": [
-          {
-            "box_id": "12",
-            "box_size": "10",
-            "box_type": "0",
-            "box_price": "500",
-            "box_reserved": false
-          },
-          {
-            "box_id": "18",
-            "box_size": "3",
-            "box_type": "1",
-            "box_price": "100",
-            "box_reserved": false
-          }
-        ]
-      },
-      {
-        "boxes": [
-          {
-            "box_id": "22",
-            "box_size": "16",
-            "box_type": "0",
-            "box_price": "1000",
-            "box_reserved": false
-          },
-          {
-            "box_id": "27",
-            "box_size": "3",
-            "box_type": "1",
-            "box_price": "100",
-            "box_reserved": false
-          }
-        ]
-      },
-      {
-        "boxes": [
-          {
-            "box_id": "36",
-            "box_size": "3",
-            "box_type": "0",
-            "box_price": "100",
-            "box_reserved": false
-          },
-          {
-            "box_id": "38",
-            "box_size": "14",
-            "box_type": "1",
-            "box_price": "1000",
-            "box_reserved": false
-          },
-          {
-            "box_id": "39",
-            "box_size": "10",
-            "box_type": "1",
-            "box_price": "500",
-            "box_reserved": false
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "warehouse_id": "4",
-    "warehouse_address": "Москва, ул. Тверская, 8",
-    "floors": [
-      {
-        "boxes": [
-          {
-            "box_id": "14",
-            "box_size": "16",
-            "box_type": "0",
-            "box_price": "1000",
-            "box_reserved": false
-          },
-          {
-            "box_id": "17",
-            "box_size": "3",
-            "box_type": "0",
-            "box_price": "100",
-            "box_reserved": false
-          }
-        ]
-      },
-      {
-        "boxes": [
-          {
-            "box_id": "23",
-            "box_size": "10",
-            "box_type": "1",
-            "box_price": "500",
-            "box_reserved": false
-          },
-          {
-            "box_id": "24",
-            "box_size": "3",
-            "box_type": "0",
-            "box_price": "100",
-            "box_reserved": false
-          },
-          {
-            "box_id": "25",
-            "box_size": "18",
-            "box_type": "1",
-            "box_price": "1000",
-            "box_reserved": false
-          }
-        ]
-      },
-      {
-        "boxes": [
-          {
-            "box_id": "33",
-            "box_size": "3",
-            "box_type": "0",
-            "box_price": "100",
-            "box_reserved": false
-          },
-          {
-            "box_id": "35",
-            "box_size": "14",
-            "box_type": "1",
-            "box_price": "1000",
-            "box_reserved": false
-          },
-          {
-            "box_id": "37",
-            "box_size": "10",
-            "box_type": "1",
-            "box_price": "500",
-            "box_reserved": false
-          }
-        ]
-      }
-    ]
-  }
+    }
 ]
