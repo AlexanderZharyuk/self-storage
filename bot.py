@@ -175,6 +175,7 @@ def publish_qr(update: Update, context: CallbackContext):
     info_message = create_info_message_for_qr(order_id, user_id)
     qr_code = make_qr(info_message)
     query.message.reply_photo(qr_code, filename='QR')
+    return USER_BOXES
 
 
 def make_qr(order_info):
