@@ -229,6 +229,12 @@ if __name__ == '__main__':
                 MessageHandler(
                     Filters.regex('^(Вернуться к заказам)$'), get_orders_list
                 ),
+                MessageHandler(
+                    Filters.regex('^(Личный кабинет)$'), personal_account
+                ),
+                MessageHandler(
+                    Filters.regex(r'Заказ #'), get_box_info
+                ),
             ],
             USER_BOXES: [
                 MessageHandler(
