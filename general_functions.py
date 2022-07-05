@@ -3,6 +3,7 @@ import json
 import random
 
 from string import digits
+from geopy import distance
 
 from validate_exceptions import *
 
@@ -188,3 +189,22 @@ def reserve_box_in_warehouse(order_params: dict):
 
     with open('json_files/warehouses.json', 'w', encoding="utf-8") as json_file:
         json.dump(warehouses, json_file, indent=4, ensure_ascii=False)
+
+
+def get_warehouses_location(user_pos: tuple) -> list:
+    """Функция для получения ближайшего склада до пользователя на основе его местоположения"""
+    with open('json_files/warehouses.json', 'r', encoding='utf-8') as json_file:
+        warehouses = json.load(json_file)
+    
+    nearest_warehouses = []
+    for warehouse in warehouses:
+        new_location = dict()
+        new_location["warehouse_id"] = warehouse['warehouse_id']
+        new_location["warehouse_address"] =  warehouse['warehouse_address']
+        new_location["distance"] = distance.distance(
+            (user_pos[0], user_pos[1]),
+            (warehouse['coordiantes']['latitude'], warehouse['coordiantes']['longitude'])
+        ).km
+        nearest_warehouses.append(new_location)
+    nearest_warehouses = sorted(nearest_warehouses, key=lambda k: k['distance'])
+    return nearest_warehouses[0]
