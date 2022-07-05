@@ -297,9 +297,7 @@ def create_order_steps(update: Update, context: CallbackContext):
         
     elif object == 'order_make_payment':
         start_without_shipping_callback(query, context)
-        start(update, context)
         return PERSONAL_ACCOUNT
-
     return CREATE_ORDER
 
 
@@ -350,15 +348,13 @@ def precheckout_callback(update: Update, context: CallbackContext) -> None:
 
 
 def successful_payment_callback(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text("Ваш заказ оформлен!\nСпасибо, что доверяете нам свои вещи!"
-                              "\nДля перехода в главное меню нажмите /start")
-    #msg_text = create_order_info_messgaes(key, context.user_data)
-    #query.edit_message_text(msg_text)
+    msg_text = create_order_info_messgaes('order_make_payment', context.user_data)
+    update.message.reply_text(msg_text)
     
     user_id = update.effective_user.id
     add_new_user_order(user_id, context.user_data)
     context.user_data.clear()
-
+    start(update, context)
 
 if __name__ == '__main__':
     load_dotenv()

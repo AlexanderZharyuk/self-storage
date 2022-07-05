@@ -127,46 +127,19 @@ def create_order_info_messgaes(key: str, user_data: dict) -> str:
 """
 
     if key=='order_time' or key=='order_make_payment':
-        if key=='order_time': text = '📝 Всё верно?'
-        else: text = '✅ Ваш заказ принят\n📞 В ближайшее время с вами свяжется менеджер\n🤝 Спасибо, что доверили нам свои вещи!'
-
-        info_msg = f"""
+        if key=='order_time': 
+            user_data['rent_price'] = int(user_data['box_price']) * int(user_data['order_time'])
+            info_msg = f"""
 🏠 Адрес: {get_warehouse_address(user_data['warehouse_id'])}
 📏 Размер бокса: {user_data['box_size']}
 ☢ Специфичный бокс: {user_data['box_type']}
 #️⃣ Номер бокса: {user_data['box_id']}
 🎢 Этаж: {user_data['box_floor']}
-💰 Стоимость: {user_data['box_price']}
 ⏱️ Срок аренды: {user_data['end_date']}
+💰 Стоимость аренды: {user_data['rent_price']}
 
-{text}
+📝 Всё верно?
 """
+        else: info_msg = '✅ Ваш заказ принят\n📞 В ближайшее время с вами свяжется менеджер\n🤝 Спасибо, что доверили нам свои вещи!'
+
     return info_msg
-
-
-
-
-    
-def create_show_user_order_message(order: dict) -> str:
-    """Здесь написан текст для показа заказа пользователя на этапе его формирования для подтверждения перед оплатой"""
-    with open('json_files/warehouses.json', 'r') as file:
-        warehouses = json.load(file)
-
-    for warehouse in warehouses:
-        if warehouse['warehouse_id'] == order['warehouse_id']:
-            founded_box = [box for box in warehouse['boxes'] if box['box_id'] == order['box_id']][0]
-
-            start_rent_date = datetime.strptime(order['start_date'], '%Y/%m/%d')
-            end_rent_date = datetime.strptime(order['end_date'], '%Y/%m/%d')
-            rent_months = (end_rent_date - start_rent_date).days // 30
-            rent_price = int(founded_box['box_price']) * rent_months
-
-    user_order = '📝 Проверьте и подтвердите ваш заказ:'
-    user_order = user_order + f"""\n
-    📦 Бокс для хранения #{order['box_id']}
-    🎢 Этаж: {order['box_floor']}
-    📏 Размер: {order['box_size']}
-    💰 Срок аренды: {order['end_date']}
-    💸 Стоимость аренды: {rent_price} RUB
-    """
-    return user_order
