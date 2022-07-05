@@ -2,6 +2,11 @@
     {
         "warehouse_id": "1",
         "warehouse_address": "Москва, ул. Кремлёвская набережная, 10",
+        "coordiantes": 
+            {
+                "latitude": "55.750824",
+                "longitude": "37.618174"
+            },
         "boxes": [
             {
                 "box_id": "11",
@@ -56,6 +61,11 @@
     {
         "warehouse_id": "2",
         "warehouse_address": "Москва, Красный проспект, 16",
+        "coordiantes": 
+            {
+                "latitude": "55.749694",
+                "longitude": "37.782063"
+            },
         "boxes": [
             {
                 "box_id": "15",
@@ -110,6 +120,11 @@
     {
         "warehouse_id": "3",
         "warehouse_address": "Москва, ул. Пушкинская, 56",
+        "coordiantes": 
+            {
+                "latitude": "55.505241",
+                "longitude": "37.563673"
+            },
         "boxes": [
             {
                 "box_id": "12",
@@ -172,6 +187,11 @@
     {
         "warehouse_id": "4",
         "warehouse_address": "Москва, ул. Тверская, 8",
+        "coordiantes": 
+            {
+                "latitude": "55.762120",
+                "longitude": "37.609640"
+            },
         "boxes": [
             {
                 "box_id": "14",

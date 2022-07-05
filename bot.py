@@ -205,7 +205,12 @@ def create_order(update: Update, context: CallbackContext) -> int:
         update.callback_query.edit_message_text(text=inline_text, reply_markup=inline_markup)
     else:
         msg_text = ('📝 Оформление заказа:')
-        message_keyboard = [['⬅️ Вернуться в главное меню']]
+        message_keyboard = [
+            [
+                KeyboardButton('⬅️ Вернуться в главное меню'),
+                KeyboardButton('📍 Ближайший склад', request_location=True)
+            ]
+        ]
         markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=False, resize_keyboard=True)
         update.effective_message.reply_text(msg_text, reply_markup=markup)
 
@@ -298,6 +303,22 @@ def create_order_steps(update: Update, context: CallbackContext):
     elif key == 'order_make_payment':
         start_without_shipping_callback(query, context)
         return PERSONAL_ACCOUNT
+    return CREATE_ORDER
+
+
+def location(update: Update, context: CallbackContext):
+    user_pos = (update.message.location.latitude, update.message.location.longitude)
+    warehouses_location = get_warehouses_location(user_pos)
+
+    inline_text = f"🏠 Ближайший до вас склад:\n\n{warehouses_location['warehouse_address']}"
+    keyboard = [
+        [
+            InlineKeyboardButton("Изменить", callback_data=str('change_warehouse')),
+            InlineKeyboardButton("Выбрать", callback_data=str('warehouse_id:' + warehouses_location['warehouse_id'])),
+        ]
+    ]
+    inline_markup = InlineKeyboardMarkup(keyboard)
+    update.effective_message.reply_text(text=inline_text, reply_markup=inline_markup)
     return CREATE_ORDER
 
 
@@ -426,6 +447,10 @@ if __name__ == '__main__':
                 MessageHandler(
                     Filters.regex('^(⬅️ Вернуться в главное меню)$'), start
                 ),
+                MessageHandler(
+                    Filters.location, location
+                ),
+                CallbackQueryHandler(create_order, pattern='^' + 'change_warehouse' + '$'),
                 CallbackQueryHandler(create_order_steps),
             ]
         },
