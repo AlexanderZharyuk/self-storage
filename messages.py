@@ -79,11 +79,11 @@ def create_boxes_list_message(boxes: list) -> str:
     else:
         boxes_list_msg = "Список доступных боксов:"
         for box in boxes:
-            boxes_list_msg = boxes_list_msg +f"""
+            boxes_list_msg = boxes_list_msg + f"""
     📦 Бокс для хранения #{box['box_id']}
     🎢 Этаж: {box['box_floor']}
     📏 Размер: {box['box_size']}
-    💰 Стоимость: {box['box_price']}
+    💰 Стоимость: {box['box_price']} RUB
 
     """
     return boxes_list_msg
@@ -91,14 +91,14 @@ def create_boxes_list_message(boxes: list) -> str:
 
 def create_order_info_messgaes(key: str, user_data: dict) -> str:
     """Создание информационного сообщения в процессе формирования заказа"""
-    if key=='warehouse_id':
+    if key == 'warehouse_id':
         info_msg = f"""
 🏠 Адрес: {get_warehouse_address(user_data['warehouse_id'])}
 
 Выберите необходимый размер бокса:
 """
 
-    if key=='box_size':
+    if key == 'box_size':
         info_msg = f"""
 🏠 Адрес: {get_warehouse_address(user_data['warehouse_id'])}
 📏 Размер бокса: {user_data['box_size']}
@@ -106,7 +106,7 @@ def create_order_info_messgaes(key: str, user_data: dict) -> str:
 Вы собираетесь хранить специфические вещи (различные легковоспоменяющиеся жидкости, крупногабаритные и т.п.)?\n
 """
 
-    if key=='box_type':
+    if key == 'box_type':
         info_msg = f"""
 🏠 Адрес: {get_warehouse_address(user_data['warehouse_id'])}
 📏 Размер бокса: {user_data['box_size']}
@@ -114,20 +114,20 @@ def create_order_info_messgaes(key: str, user_data: dict) -> str:
 
 """
 
-    if key=='box_id':
+    if key == 'box_id':
         info_msg = f"""
 🏠 Адрес: {get_warehouse_address(user_data['warehouse_id'])}
 📏 Размер бокса: {user_data['box_size']}
 ☢ Специфичный бокс: {user_data['box_type']}
 #️⃣ Номер бокса: {user_data['box_id']}
 🎢 Этаж: {user_data['box_floor']}
-💰 Стоимость: {user_data['box_price']}
+💰 Стоимость: {user_data['box_price']} RUB
 
 ⏱️ На сколько месяцев вы хотите арендовать бокс?
 """
 
-    if key=='order_time' or key=='order_make_payment':
-        if key=='order_time': 
+    if key == 'order_time' or key == 'order_make_payment':
+        if key == 'order_time':
             user_data['rent_price'] = int(user_data['box_price']) * int(user_data['order_time'])
             info_msg = f"""
 🏠 Адрес: {get_warehouse_address(user_data['warehouse_id'])}
@@ -136,10 +136,12 @@ def create_order_info_messgaes(key: str, user_data: dict) -> str:
 #️⃣ Номер бокса: {user_data['box_id']}
 🎢 Этаж: {user_data['box_floor']}
 ⏱️ Срок аренды: {user_data['end_date']}
-💰 Стоимость аренды: {user_data['rent_price']}
+💰 Стоимость аренды: {user_data['rent_price']} RUB
 
 📝 Всё верно?
 """
-        else: info_msg = '✅ Ваш заказ принят\n📞 В ближайшее время с вами свяжется менеджер\n🤝 Спасибо, что доверили нам свои вещи!'
+        else:
+            info_msg = '✅ Ваш заказ принят\n📞 В ближайшее время с вами свяжется менеджер' \
+                       '\n🤝 Спасибо, что доверили нам свои вещи!'
 
     return info_msg

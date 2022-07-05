@@ -158,7 +158,7 @@ def add_new_user_order(user_id: int, order_params: dict):
         users = json.load(json_file)
 
     for user in users:
-        if (user['user_id'] == user_id):
+        if user['user_id'] == user_id:
             new_order = {
                 "order_id": random.randint(1, 200),
                 "qr_code": create_unique_qr(),

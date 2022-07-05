@@ -95,7 +95,7 @@
                 "box_size": "0",
                 "box_type": "0",
                 "box_price": "100",
-                "box_reserved": true
+                "box_reserved": false
             },
             {
                 "box_id": "36",
@@ -117,7 +117,7 @@
                 "box_size": "1",
                 "box_type": "0",
                 "box_price": "500",
-                "box_reserved": true
+                "box_reserved": false
             },
             {
                 "box_id": "18",
@@ -149,7 +149,7 @@
                 "box_size": "0",
                 "box_type": "0",
                 "box_price": "100",
-                "box_reserved": true
+                "box_reserved": false
             },
             {
                 "box_id": "38",

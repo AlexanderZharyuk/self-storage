@@ -219,7 +219,7 @@ def create_order_steps(update: Update, context: CallbackContext):
 
     key, id = query.data.split(':')
     context.user_data[key] = id
-    if key=='warehouse_id':
+    if key == 'warehouse_id':
         msg_text = create_order_info_messgaes(key, context.user_data)
         keyboard = [
             [
@@ -231,7 +231,7 @@ def create_order_steps(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
             
-    elif key=='box_size':
+    elif key == 'box_size':
         msg_text = create_order_info_messgaes(key, context.user_data)
         keyboard = [
             [
@@ -242,7 +242,7 @@ def create_order_steps(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
     
-    elif key=='box_type':
+    elif key == 'box_type':
         msg_header = create_order_info_messgaes(key, context.user_data)
         boxes_list = get_warehouses_boxes(context.user_data)
         msg_boxes_list = create_boxes_list_message(boxes_list)
@@ -259,7 +259,7 @@ def create_order_steps(update: Update, context: CallbackContext):
         if not boxes_list:
             context.user_data.clear()
  
-    elif key=='box_id':
+    elif key == 'box_id':
         context.user_data['box_floor'] = get_box_floor(context.user_data)
         context.user_data['box_price'] = get_box_price(context.user_data)
         msg_text = create_order_info_messgaes(key, context.user_data)
@@ -274,7 +274,7 @@ def create_order_steps(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
 
-    elif key=='order_time':
+    elif key == 'order_time':
         today = date.today()
         days = calendar.monthrange(today.year, today.month)[1]
         end_date = today + timedelta(days=days * int(id))
@@ -291,11 +291,11 @@ def create_order_steps(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
     
-    elif key=='change_order':
+    elif key == 'change_order':
         context.user_data.clear()
         create_order(update, context)
         
-    elif object == 'order_make_payment':
+    elif key == 'order_make_payment':
         start_without_shipping_callback(query, context)
         return PERSONAL_ACCOUNT
     return CREATE_ORDER
@@ -308,15 +308,15 @@ def start_without_shipping_callback(update, context: CallbackContext) -> None:
     box_number = None
     summary = None
     for string in strings:
-        if string.startswith('📦 Бокс'):
-            box_number = string[string.find('#'):]
-        if string.startswith('💸 Стоимость'):
+        if string.startswith('#️⃣ Номер'):
+            box_number = string[string.find(':') + 2:]
+        if string.startswith('💰 Стоимость'):
             start_index = string.find(':') + 1
             end_index = string.find('RUB')
             summary = int(string[start_index:end_index].strip(' '))
 
-    title = "Оплата услуги"
-    description = f"Аренда бокса {box_number}"
+    title = "Аренда бокса"
+    description = f"Аренда бокса #{box_number}"
     payload = "BOT Payment"
     provider_token = os.environ['PAYMENT_TOKEN']
     currency = "RUB"
@@ -355,6 +355,7 @@ def successful_payment_callback(update: Update, context: CallbackContext) -> Non
     add_new_user_order(user_id, context.user_data)
     context.user_data.clear()
     start(update, context)
+
 
 if __name__ == '__main__':
     load_dotenv()
