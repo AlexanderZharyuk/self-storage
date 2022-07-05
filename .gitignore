@@ -3,3 +3,4 @@
 .env
 __pycache__/
 users_order.json
+.DS_Store

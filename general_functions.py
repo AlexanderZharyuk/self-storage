@@ -1,10 +1,19 @@
+import os
 import json
+import random
 
-from string import ascii_letters, digits
+from string import digits
 
 from validate_exceptions import *
 
-import random
+
+def create_database():
+    os.makedirs('json_files', exist_ok=True)
+
+    with open('json_files/users_order.json', 'w', encoding='"utf-8"') as file:
+        empty_base = []
+        json.dump(empty_base, file)
+
 
 def is_new_user(user_id: int) -> bool:
     """Функция возвращает True или False в зависимости от того - есть ли пользователь в базе данных"""
@@ -78,22 +87,25 @@ def get_warehouses_address() -> list:
     """Функция для получения списка адресов складов"""
     with open('json_files/warehouses.json', 'r', encoding='utf-8') as json_file:
         warehouses = json.load(json_file)
-    warehouses_address = [dict({'warehouse_id': warehouse['warehouse_id'], 'warehouse_address': warehouse['warehouse_address']}) for warehouse in warehouses]
+    warehouses_address = [
+        dict({'warehouse_id': warehouse['warehouse_id'], 'warehouse_address': warehouse['warehouse_address']}) for
+        warehouse in warehouses]
     return warehouses_address
 
-    
+
 def get_warehouses_boxes(params_by_user: dict) -> list:
     """Функция для получения списка всех доступных боксов с указаннными пользователем параметрами на складе"""
     with open('json_files/warehouses.json', 'r', encoding='utf-8') as json_file:
         warehouses = json.load(json_file)
     boxes = []
 
-    warehouse_boxes = [warehouse['boxes'] for warehouse in warehouses if warehouse['warehouse_id'] == params_by_user['warehouse_id']]
+    warehouse_boxes = [warehouse['boxes'] for warehouse in warehouses
+                       if warehouse['warehouse_id'] == params_by_user['warehouse_id']]
     for boxes_list in warehouse_boxes:
         for box in boxes_list:
-            if (box['box_size'] == params_by_user['box_size'] and 
-                box['box_type'] == params_by_user['box_type'] and 
-                not box['box_reserved']):
+            if (box['box_size'] == params_by_user['box_size'] and
+                    box['box_type'] == params_by_user['box_type'] and
+                    not box['box_reserved']):
                 boxes.append(box)
     return boxes
 
@@ -103,7 +115,8 @@ def get_box_floor(params_by_user: dict) -> list:
     with open('json_files/warehouses.json', 'r', encoding='utf-8') as json_file:
         warehouses = json.load(json_file)
 
-    warehouse_boxes = [warehouse['boxes'] for warehouse in warehouses if warehouse['warehouse_id'] == params_by_user['warehouse_id']]
+    warehouse_boxes = [warehouse['boxes'] for warehouse in warehouses if
+                       warehouse['warehouse_id'] == params_by_user['warehouse_id']]
     for boxes_list in warehouse_boxes:
         for box in boxes_list:
             if box['box_id'] == params_by_user['box_id']:
@@ -121,26 +134,44 @@ def get_box_price(params_by_user: dict) -> list:
             if box['box_id'] == params_by_user['box_id']:
                 return box['box_price']
 
+                
+def create_unique_qr() -> str:
+    with open('json_files/users_order.json', 'r') as file:
+        all_users = json.load(file)
+
+    all_orders = [order['orders'] for order in all_users]
+    all_qr_codes = []
+    for user_order in all_orders:
+        for qr_code in user_order:
+            all_qr_codes.append(int(qr_code['qr_code']))
+
+    random_qr = random.randint(10000, 99999)
+    while random_qr in all_qr_codes:
+        random_qr = random.randint(10000, 99999)
+
+    return str(random_qr)
+
+
 def add_new_user_order(user_id: int, order_params: dict):
     """Функция добавления нового заказа в базу"""
     with open('json_files/users_order.json', 'r', encoding="utf-8") as json_file:
-            users = json.load(json_file)
+        users = json.load(json_file)
 
     for user in users:
         if (user['user_id'] == user_id):
             new_order = {
-                "order_id": random.randint(1,200),
-                "qr_code": "1",
+                "order_id": random.randint(1, 200),
+                "qr_code": create_unique_qr(),
                 "warehouse_id": order_params['warehouse_id'],
                 "box_id": order_params['box_id'],
                 "start_date": order_params['start_date'],
                 "end_date": order_params['end_date'],
-                }
+            }
             user['orders'].append(new_order)
 
     with open('json_files/users_order.json', 'w', encoding="utf-8") as json_file:
         json.dump(users, json_file, indent=4, ensure_ascii=False)
-    
+
     reserve_box_in_warehouse(order_params)
 
 

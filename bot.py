@@ -1,16 +1,16 @@
 import io
-import os
-import json
 import qrcode
 import calendar
+
 from datetime import date, timedelta
 
 from dotenv import load_dotenv
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, \
-    InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import (Update, ReplyKeyboardMarkup, KeyboardButton,
+                      InlineKeyboardMarkup, InlineKeyboardButton,
+                      LabeledPrice)
 from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           Filters, CallbackContext, ConversationHandler,
-                          CallbackQueryHandler)
+                          CallbackQueryHandler, PreCheckoutQueryHandler)
 
 from messages import *
 from general_functions import *
@@ -24,7 +24,7 @@ def start(update: Update, context: CallbackContext) -> int:
 
     if is_new_user(user.id):
         message_keyboard = [['✅ Согласен', '❌ Не согласен']]
-        markup = ReplyKeyboardMarkup(message_keyboard, resize_keyboard=True)
+        markup = ReplyKeyboardMarkup(message_keyboard, resize_keyboard=True, one_time_keyboard=True)
 
         with open('documents/sample.pdf', 'rb') as image:
             user_agreement_pdf = image.read()
@@ -128,8 +128,10 @@ def end_auth(update: Update, context: CallbackContext):
 
 
 def cancel_auth(update: Update, context: CallbackContext) -> None:
+    message_keyboard = [['✅ Согласен', '❌ Не согласен']]
+    markup = ReplyKeyboardMarkup(message_keyboard, resize_keyboard=True, one_time_keyboard=True)
     update.message.reply_text('Извините, тогда мы не сможем пропустить вас дальше. '
-                              'Чтобы изменить решение - напишите /start.')
+                              'Чтобы изменить решение - напишите /start.', reply_markup=markup)
     return ConversationHandler.END
 
 
@@ -293,26 +295,77 @@ def create_order_steps(update: Update, context: CallbackContext):
         context.user_data.clear()
         create_order(update, context)
         
-    elif key=='order_make_payment':
-        msg_text = create_order_info_messgaes(key, context.user_data)
-        query.edit_message_text(msg_text)
-        # query.edit_message_text('✅ Ваш заказ принят\n📞 В ближайшее время с вами свяжется менеджер\n🤝 Спасибо, что доверили нам свои вещи!')
-        
-        #
-        # Code for order payment
-        #
-
-        # Save payment order to json
-        user_id = update.effective_user.id
-        add_new_user_order(user_id, context.user_data)
-        context.user_data.clear()
+    elif object == 'order_make_payment':
+        start_without_shipping_callback(query, context)
         start(update, context)
         return PERSONAL_ACCOUNT
+
     return CREATE_ORDER
+
+
+def start_without_shipping_callback(update, context: CallbackContext) -> None:
+    chat_id = update.message.chat_id
+    strings = [string.strip() for string in update.message.text.split('\n')]
+
+    box_number = None
+    summary = None
+    for string in strings:
+        if string.startswith('📦 Бокс'):
+            box_number = string[string.find('#'):]
+        if string.startswith('💸 Стоимость'):
+            start_index = string.find(':') + 1
+            end_index = string.find('RUB')
+            summary = int(string[start_index:end_index].strip(' '))
+
+    title = "Оплата услуги"
+    description = f"Аренда бокса {box_number}"
+    payload = "BOT Payment"
+    provider_token = os.environ['PAYMENT_TOKEN']
+    currency = "RUB"
+    price = 100
+    prices = [LabeledPrice(f"Бокс {box_number}", price * summary)]
+
+    context.bot.send_invoice(
+        chat_id=chat_id,
+        title=title,
+        description=description,
+        payload=payload,
+        provider_token=provider_token,
+        start_parameter='12345',
+        currency=currency,
+        prices=prices,
+        need_name=False,
+        need_phone_number=False,
+        need_email=True,
+        is_flexible=False,
+    )
+
+
+def precheckout_callback(update: Update, context: CallbackContext) -> None:
+    query = update.pre_checkout_query
+    if query.invoice_payload != 'BOT Payment':
+        query.answer(ok=False, error_message="С оформлением заказа произошла ошибка.")
+    else:
+        query.answer(ok=True)
+
+
+def successful_payment_callback(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text("Ваш заказ оформлен!\nСпасибо, что доверяете нам свои вещи!"
+                              "\nДля перехода в главное меню нажмите /start")
+    #msg_text = create_order_info_messgaes(key, context.user_data)
+    #query.edit_message_text(msg_text)
+    
+    user_id = update.effective_user.id
+    add_new_user_order(user_id, context.user_data)
+    context.user_data.clear()
+
 
 if __name__ == '__main__':
     load_dotenv()
     telegram_bot_token = os.environ['TELEGRAM_TOKEN']
+
+    if not os.path.exists('json_files/users_order.json'):
+        create_database()
 
     updater = Updater(telegram_bot_token, use_context=True)
     dispatcher = updater.dispatcher
@@ -373,8 +426,6 @@ if __name__ == '__main__':
                 ),
             ],
             CREATE_ORDER: [
-                #CallbackQueryHandler(create_order_steps, pattern='^' + '(Формирование нового заказа📝)' + '$'),
-                #CallbackQueryHandler(start, pattern='^' + '(cancel)' + '$'),
                 MessageHandler(
                     Filters.regex('^(⬅️ Вернуться в главное меню)$'), start
                 ),
@@ -387,6 +438,9 @@ if __name__ == '__main__':
     dispatcher.add_handler(MessageHandler(Filters.regex('^❌ Не согласен$'), cancel_auth))
     dispatcher.add_handler(conv_handler)
     dispatcher.add_handler(CommandHandler("start", start))
-    #dispatcher.add_handler()
+    dispatcher.add_handler(PreCheckoutQueryHandler(precheckout_callback))
+    dispatcher.add_handler(MessageHandler(Filters.successful_payment, successful_payment_callback))
+    dispatcher.add_handler(CallbackQueryHandler(successful_payment_callback))
+
     updater.start_polling()
     updater.idle()
