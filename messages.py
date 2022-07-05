@@ -1,8 +1,4 @@
-import json
-
 from general_functions import get_orders, get_warehouse_address
-
-from datetime import datetime
 
 
 def create_start_message_new_user(username: str) -> str:
@@ -69,44 +65,3 @@ def create_info_message_for_qr(order_id, user_id):
             End date: {end_date}"""
 
             return message
-
-
-def create_boxes_list_message(boxes: list) -> str:
-    """Здесь написан текст для списка свободных боксов"""
-    if not boxes:
-        boxes_list_msg = "В данный момент на этом складе нет свободных боксов удовлетворяющих вашему запросу."    
-    else:
-        boxes_list_msg = "Список доступных боксов:"
-        for box in boxes:
-            boxes_list_msg = boxes_list_msg + f"""\n
-    📦 Бокс для хранения #{box['box_id']}
-    🎢 Этаж: {box['box_floor']}
-    📏 Размер: {box['box_size']}
-    💰 Стоимость: {box['box_price']}
-    """
-    return boxes_list_msg
-
-
-def create_show_user_order_message(order: dict) -> str:
-    """Здесь написан текст для показа заказа пользователя на этапе его формирования для подтверждения перед оплатой"""
-    with open('json_files/warehouses.json', 'r') as file:
-        warehouses = json.load(file)
-
-    for warehouse in warehouses:
-        if warehouse['warehouse_id'] == order['warehouse_id']:
-            founded_box = [box for box in warehouse['boxes'] if box['box_id'] == order['box_id']][0]
-
-            start_rent_date = datetime.strptime(order['start_date'], '%Y/%m/%d')
-            end_rent_date = datetime.strptime(order['end_date'], '%Y/%m/%d')
-            rent_months = (end_rent_date - start_rent_date).days // 30
-            rent_price = int(founded_box['box_price']) * rent_months
-
-    user_order = '📝 Проверьте и подтвердите ваш заказ:'
-    user_order = user_order + f"""\n
-    📦 Бокс для хранения #{order['box_id']}
-    🎢 Этаж: {order['box_floor']}
-    📏 Размер: {order['box_size']}
-    💰 Срок аренды: {order['end_date']}
-    💸 Стоимость аренды: {rent_price} RUB
-    """
-    return user_order
