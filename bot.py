@@ -220,10 +220,10 @@ def create_order_steps(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
 
-    key, id = query.data.split(':')
-    context.user_data[key] = id
-    if key == 'warehouse_id':
-        msg_text = create_order_info_messgaes(key, context.user_data)
+    property_name, property_value = query.data.split(':')
+    context.user_data[property_name] = property_value
+    if property_name == 'warehouse_id':
+        msg_text = create_order_info_messgaes(property_name, context.user_data)
         keyboard = [
             [
                 InlineKeyboardButton("3 м2", callback_data=str('box_size:0')),
@@ -234,8 +234,8 @@ def create_order_steps(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
             
-    elif key == 'box_size':
-        msg_text = create_order_info_messgaes(key, context.user_data)
+    elif property_name == 'box_size':
+        msg_text = create_order_info_messgaes(property_name, context.user_data)
         keyboard = [
             [
                 InlineKeyboardButton("Нет ❌", callback_data=str('box_type:0')),
@@ -245,8 +245,8 @@ def create_order_steps(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
     
-    elif key == 'box_type':
-        msg_header = create_order_info_messgaes(key, context.user_data)
+    elif property_name == 'box_type':
+        msg_header = create_order_info_messgaes(property_name, context.user_data)
         boxes_list = get_warehouses_boxes(context.user_data)
         msg_boxes_list = create_boxes_list_message(boxes_list)
         msg_text= "".join([msg_header, msg_boxes_list]) 
@@ -262,10 +262,10 @@ def create_order_steps(update: Update, context: CallbackContext):
         if not boxes_list:
             context.user_data.clear()
  
-    elif key == 'box_id':
+    elif property_name == 'box_id':
         context.user_data['box_floor'] = get_box_floor(context.user_data)
         context.user_data['box_price'] = get_box_price(context.user_data)
-        msg_text = create_order_info_messgaes(key, context.user_data)
+        msg_text = create_order_info_messgaes(property_name, context.user_data)
         keyboard = [
                     [
                         InlineKeyboardButton("1", callback_data=str('order_time:1')),
@@ -277,14 +277,14 @@ def create_order_steps(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
 
-    elif key == 'order_time':
+    elif property_name == 'order_time':
         today = date.today()
         days = calendar.monthrange(today.year, today.month)[1]
-        end_date = today + timedelta(days=days * int(id))
+        end_date = today + timedelta(days=days * int(property_value))
         context.user_data['start_date'] = "{}/{}/{}".format(today.year, today.month, today.day)
         context.user_data['end_date'] = "{}/{}/{}".format(end_date.year, end_date.month, end_date.day)
 
-        msg_text = create_order_info_messgaes(key, context.user_data)
+        msg_text = create_order_info_messgaes(property_name, context.user_data)
         keyboard = [
                     [
                         InlineKeyboardButton("Изменить", callback_data=str('change_order:1')),
@@ -294,11 +294,11 @@ def create_order_steps(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
     
-    elif key == 'change_order':
+    elif property_name == 'change_order':
         context.user_data.clear()
         create_order(update, context)
         
-    elif key == 'order_make_payment':
+    elif property_name == 'order_make_payment':
         start_without_shipping_callback(query, context)
         return PERSONAL_ACCOUNT
     return CREATE_ORDER
