@@ -110,6 +110,17 @@ def get_box_floor(params_by_user: dict) -> list:
                 return box['box_floor']
 
 
+def get_box_price(params_by_user: dict) -> list:
+    """Функция для получения стоимости выбранного бокса"""
+    with open('json_files/warehouses.json', 'r', encoding='utf-8') as json_file:
+        warehouses = json.load(json_file)
+
+    warehouse_boxes = [warehouse['boxes'] for warehouse in warehouses if warehouse['warehouse_id'] == params_by_user['warehouse_id']]
+    for boxes_list in warehouse_boxes:
+        for box in boxes_list:
+            if box['box_id'] == params_by_user['box_id']:
+                return box['box_price']
+
 def add_new_user_order(user_id: int, order_params: dict):
     """Функция добавления нового заказа в базу"""
     with open('json_files/users_order.json', 'r', encoding="utf-8") as json_file:

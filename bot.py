@@ -12,8 +12,8 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           Filters, CallbackContext, ConversationHandler,
                           CallbackQueryHandler)
 
-from messages import create_start_message_new_user, create_start_message_exist_user, create_info_message, create_info_message_for_qr, create_boxes_list_message, create_show_user_order_message
-from general_functions import is_new_user, get_orders_ids, is_valid_phone_number, is_fullname_valid, clear_phone_number, get_warehouses_address, get_warehouses_boxes, get_box_floor, add_new_user_order
+from messages import *
+from general_functions import *
 from validate_exceptions import *
 
 USER_FULLNAME, PHONE_NUMBER, END_AUTH, PERSONAL_ACCOUNT, ORDERS, USER_BOXES, CREATE_ORDER = range(7)
@@ -35,12 +35,11 @@ def start(update: Update, context: CallbackContext) -> int:
 
         return USER_FULLNAME
     else:
-        message_keyboard = [['Заказ', 'Личный кабинет']]
+        message_keyboard = [['Новый заказ', 'Личный кабинет']]
         markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=True, resize_keyboard=True)
 
         menu_msg = create_start_message_exist_user(user.name)
-        update.message.reply_text(menu_msg, reply_markup=markup)
-
+        update.effective_message.reply_text(menu_msg, reply_markup=markup)
         return PERSONAL_ACCOUNT
 
 
@@ -188,35 +187,38 @@ def make_qr(order_info):
     return img_byte_arr
 
 
-def order_select_warehouse(update: Update, context: CallbackContext) -> int:
+def create_order(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
-    if query:
-        query.answer()
 
     warehouses_address = get_warehouses_address()
-    msg_text = '🏠 Выберите расположение ближайшего для вас склада:\n'
+    inline_text = '🏠 Выберите расположение ближайшего для вас склада:\n'
     keyboard = [[]]
     for warehouse in warehouses_address:
-           msg_text = msg_text + warehouse['warehouse_id'] + ') ' +  warehouse['warehouse_address'] + '\n'
-           keyboard[0].append(InlineKeyboardButton(warehouse['warehouse_id'], callback_data=str('warehouse_id:' + warehouse['warehouse_id'])),)
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    if query:
-        query.edit_message_text(text=msg_text, reply_markup=reply_markup)
-    else:
-        update.message.reply_text(msg_text, reply_markup=reply_markup)
-    
-    return CREATE_ORDER
+           inline_text = inline_text + warehouse['warehouse_id'] + ') ' +  warehouse['warehouse_address'] + '\n'
+           keyboard[0].append(InlineKeyboardButton(warehouse['warehouse_id'], callback_data=str('warehouse_id:' + warehouse['warehouse_id'])))
+    inline_markup = InlineKeyboardMarkup(keyboard)
 
-def order_create(update: Update, context: CallbackContext):
+    if query:
+        update.callback_query.answer()
+        update.callback_query.edit_message_text(text=inline_text, reply_markup=inline_markup)
+    else:
+        msg_text = ('📝 Оформление заказа:')
+        message_keyboard = [['⬅️ Вернуться в главное меню']]
+        markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=False, resize_keyboard=True)
+        update.effective_message.reply_text(msg_text, reply_markup=markup)
+
+        update.effective_message.reply_text(text=inline_text, reply_markup=inline_markup)
+    return CREATE_ORDER
+    
+
+def create_order_steps(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
-    
-    object, id = query.data.split(':')
-    context.user_data[object] = id
 
-    if object=='warehouse_id':
-        msg_text = 'Выберите необходимый размер бокса:\n'
+    key, id = query.data.split(':')
+    context.user_data[key] = id
+    if key=='warehouse_id':
+        msg_text = create_order_info_messgaes(key, context.user_data)
         keyboard = [
             [
                 InlineKeyboardButton("3 м2", callback_data=str('box_size:0')),
@@ -226,52 +228,58 @@ def order_create(update: Update, context: CallbackContext):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
-    
-    elif object=='box_size':
-        msg_text = 'Вы собираетесь хранить специфические вещи (различные легковоспоменяющиеся жидкости, крупногабаритные и т.п.)?\n'
+            
+    elif key=='box_size':
+        msg_text = create_order_info_messgaes(key, context.user_data)
         keyboard = [
-                    [
-                        InlineKeyboardButton("Нет ❌", callback_data=str('box_type:0')),
-                        InlineKeyboardButton("Да ✅", callback_data=str('box_type:1'))
-                    ]
-                ]
+            [
+                InlineKeyboardButton("Нет ❌", callback_data=str('box_type:0')),
+                InlineKeyboardButton("Да ✅", callback_data=str('box_type:1'))
+            ]
+        ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
     
-    elif object=='box_type':
-        boxes = get_warehouses_boxes(context.user_data)
-        msg_text = create_boxes_list_message(boxes)
-        keyboard = [[]]
-        for box in boxes:
+    elif key=='box_type':
+        msg_header = create_order_info_messgaes(key, context.user_data)
+        boxes_list = get_warehouses_boxes(context.user_data)
+        msg_boxes_list = create_boxes_list_message(boxes_list)
+        msg_text= "".join([msg_header, msg_boxes_list]) 
+        keyboard = [
+            []
+        ]
+        
+        for box in boxes_list:
             keyboard[0].append(InlineKeyboardButton(box['box_id'], callback_data=str('box_id:' + box['box_id'])),)
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
-        if not boxes:
+        
+        if not boxes_list:
             context.user_data.clear()
-            return PERSONAL_ACCOUNT
-    
-    elif object=='box_id':
+ 
+    elif key=='box_id':
         context.user_data['box_floor'] = get_box_floor(context.user_data)
-        msg_text = '⏱️ На какой срок вы хотите арендовать бокс?\n'
+        context.user_data['box_price'] = get_box_price(context.user_data)
+        msg_text = create_order_info_messgaes(key, context.user_data)
         keyboard = [
                     [
-                        InlineKeyboardButton("1 месяц", callback_data=str('order_time:1')),
-                        InlineKeyboardButton("3 месяца", callback_data=str('order_time:3')),
-                        InlineKeyboardButton("6 месяцев", callback_data=str('order_time:6')),
-                        InlineKeyboardButton("12 месяцев", callback_data=str('order_time:12')),
+                        InlineKeyboardButton("1", callback_data=str('order_time:1')),
+                        InlineKeyboardButton("3", callback_data=str('order_time:3')),
+                        InlineKeyboardButton("6", callback_data=str('order_time:6')),
+                        InlineKeyboardButton("12", callback_data=str('order_time:12')),
                     ]
                 ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
 
-    elif object=='order_time':
+    elif key=='order_time':
         today = date.today()
         days = calendar.monthrange(today.year, today.month)[1]
         end_date = today + timedelta(days=days * int(id))
         context.user_data['start_date'] = "{}/{}/{}".format(today.year, today.month, today.day)
         context.user_data['end_date'] = "{}/{}/{}".format(end_date.year, end_date.month, end_date.day)
-    
-        msg_text = create_show_user_order_message(context.user_data)
+
+        msg_text = create_order_info_messgaes(key, context.user_data)
         keyboard = [
                     [
                         InlineKeyboardButton("Изменить", callback_data=str('change_order:1')),
@@ -281,12 +289,15 @@ def order_create(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
     
-    elif object=='change_order':
+    elif key=='change_order':
         context.user_data.clear()
-        order_select_warehouse(update, context)
-
-    elif object=='order_make_payment':
-        query.message.reply_text('Ваш заказ принят.\nВ ближайшее время с вами свяжется менеджер 📞\nСпасибо, что доверяете нам свои вещи!')
+        create_order(update, context)
+        
+    elif key=='order_make_payment':
+        msg_text = create_order_info_messgaes(key, context.user_data)
+        query.edit_message_text(msg_text)
+        # query.edit_message_text('✅ Ваш заказ принят\n📞 В ближайшее время с вами свяжется менеджер\n🤝 Спасибо, что доверили нам свои вещи!')
+        
         #
         # Code for order payment
         #
@@ -295,6 +306,7 @@ def order_create(update: Update, context: CallbackContext):
         user_id = update.effective_user.id
         add_new_user_order(user_id, context.user_data)
         context.user_data.clear()
+        start(update, context)
         return PERSONAL_ACCOUNT
     return CREATE_ORDER
 
@@ -328,7 +340,7 @@ if __name__ == '__main__':
             ],
             PERSONAL_ACCOUNT: [
                 MessageHandler(
-                    Filters.regex('^(Заказ)$'), order_select_warehouse
+                    Filters.regex('^(Новый заказ)$'), create_order
                 ),
                 MessageHandler(
                     Filters.regex('^(Личный кабинет)$'), personal_account
@@ -350,6 +362,7 @@ if __name__ == '__main__':
                 MessageHandler(
                     Filters.regex(r'Заказ #'), get_box_info
                 ),
+                CallbackQueryHandler(publish_qr)
             ],
             USER_BOXES: [
                 MessageHandler(
@@ -357,10 +370,15 @@ if __name__ == '__main__':
                 ),
                 MessageHandler(
                     Filters.regex('^(Личный кабинет)$'), personal_account
-                )
+                ),
             ],
             CREATE_ORDER: [
-                CallbackQueryHandler(order_create)
+                #CallbackQueryHandler(create_order_steps, pattern='^' + '(Формирование нового заказа📝)' + '$'),
+                #CallbackQueryHandler(start, pattern='^' + '(cancel)' + '$'),
+                MessageHandler(
+                    Filters.regex('^(⬅️ Вернуться в главное меню)$'), start
+                ),
+                CallbackQueryHandler(create_order_steps),
             ]
         },
         fallbacks=[MessageHandler(Filters.regex('^Стоп$'), start)],
@@ -369,7 +387,6 @@ if __name__ == '__main__':
     dispatcher.add_handler(MessageHandler(Filters.regex('^❌ Не согласен$'), cancel_auth))
     dispatcher.add_handler(conv_handler)
     dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CallbackQueryHandler(publish_qr))
-
+    #dispatcher.add_handler()
     updater.start_polling()
     updater.idle()
