@@ -18,6 +18,7 @@ from validate_exceptions import *
 
 USER_FULLNAME, PHONE_NUMBER, END_AUTH, PERSONAL_ACCOUNT, ORDERS, USER_BOXES, CREATE_ORDER = range(7)
 
+SELF_STORAGE_AGREEMENTS: str = 'documents/sample.pdf'
 
 def start(update: Update, context: CallbackContext) -> int:
     user = update.effective_user
@@ -26,7 +27,7 @@ def start(update: Update, context: CallbackContext) -> int:
         message_keyboard = [['✅ Согласен', '❌ Не согласен']]
         markup = ReplyKeyboardMarkup(message_keyboard, resize_keyboard=True, one_time_keyboard=True)
 
-        with open('documents/sample.pdf', 'rb') as image:
+        with open(SELF_STORAGE_AGREEMENTS, 'rb') as image:
             user_agreement_pdf = image.read()
 
         greeting_msg = create_start_message_new_user(user.name)
@@ -115,13 +116,10 @@ def end_auth(update: Update, context: CallbackContext):
             "orders": []
         }
 
-        with open('json_files/users_order.json', 'r', encoding="utf-8") as json_file:
-            database_without_new_user = json.load(json_file)
-
+        database_without_new_user = database_read_users_order()
         database_without_new_user.append(user)
-
-        with open('json_files/users_order.json', 'w', encoding="utf-8") as json_file:
-            json.dump(database_without_new_user, json_file, indent=4, ensure_ascii=False)
+        
+        database_write_users_order(database_without_new_user)
 
         user_data.clear()
         return start(update, context)
@@ -382,8 +380,7 @@ if __name__ == '__main__':
     load_dotenv()
     telegram_bot_token = os.environ['TELEGRAM_TOKEN']
 
-    if not os.path.exists('json_files/users_order.json'):
-        create_database()
+    database_create_users_order()
 
     updater = Updater(telegram_bot_token, use_context=True)
     dispatcher = updater.dispatcher
