@@ -18,6 +18,7 @@ from validate_exceptions import *
 
 USER_FULLNAME, PHONE_NUMBER, END_AUTH, PERSONAL_ACCOUNT, ORDERS, USER_BOXES, CREATE_ORDER = range(7)
 
+SELF_STORAGE_AGREEMENTS: str = 'documents/sample.pdf'
 
 def start(update: Update, context: CallbackContext) -> int:
     user = update.effective_user
@@ -26,7 +27,7 @@ def start(update: Update, context: CallbackContext) -> int:
         message_keyboard = [['✅ Согласен', '❌ Не согласен']]
         markup = ReplyKeyboardMarkup(message_keyboard, resize_keyboard=True, one_time_keyboard=True)
 
-        with open('documents/sample.pdf', 'rb') as image:
+        with open(SELF_STORAGE_AGREEMENTS, 'rb') as image:
             user_agreement_pdf = image.read()
 
         greeting_msg = create_start_message_new_user(user.name)
@@ -115,13 +116,10 @@ def end_auth(update: Update, context: CallbackContext):
             "orders": []
         }
 
-        with open('json_files/users_order.json', 'r', encoding="utf-8") as json_file:
-            database_without_new_user = json.load(json_file)
-
+        database_without_new_user = database_read_users_order()
         database_without_new_user.append(user)
-
-        with open('json_files/users_order.json', 'w', encoding="utf-8") as json_file:
-            json.dump(database_without_new_user, json_file, indent=4, ensure_ascii=False)
+        
+        database_write_users_order(database_without_new_user)
 
         user_data.clear()
         return start(update, context)
@@ -222,10 +220,10 @@ def create_order_steps(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
 
-    key, id = query.data.split(':')
-    context.user_data[key] = id
-    if key == 'warehouse_id':
-        msg_text = create_order_info_messgaes(key, context.user_data)
+    property_name, property_value = query.data.split(':')
+    context.user_data[property_name] = property_value
+    if property_name == 'warehouse_id':
+        msg_text = create_order_info_messgaes(property_name, context.user_data)
         keyboard = [
             [
                 InlineKeyboardButton("3 м2", callback_data=str('box_size:0')),
@@ -236,8 +234,8 @@ def create_order_steps(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
             
-    elif key == 'box_size':
-        msg_text = create_order_info_messgaes(key, context.user_data)
+    elif property_name == 'box_size':
+        msg_text = create_order_info_messgaes(property_name, context.user_data)
         keyboard = [
             [
                 InlineKeyboardButton("Нет ❌", callback_data=str('box_type:0')),
@@ -247,8 +245,8 @@ def create_order_steps(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
     
-    elif key == 'box_type':
-        msg_header = create_order_info_messgaes(key, context.user_data)
+    elif property_name == 'box_type':
+        msg_header = create_order_info_messgaes(property_name, context.user_data)
         boxes_list = get_warehouses_boxes(context.user_data)
         msg_boxes_list = create_boxes_list_message(boxes_list)
         msg_text= "".join([msg_header, msg_boxes_list]) 
@@ -264,10 +262,10 @@ def create_order_steps(update: Update, context: CallbackContext):
         if not boxes_list:
             context.user_data.clear()
  
-    elif key == 'box_id':
+    elif property_name == 'box_id':
         context.user_data['box_floor'] = get_box_floor(context.user_data)
         context.user_data['box_price'] = get_box_price(context.user_data)
-        msg_text = create_order_info_messgaes(key, context.user_data)
+        msg_text = create_order_info_messgaes(property_name, context.user_data)
         keyboard = [
                     [
                         InlineKeyboardButton("1", callback_data=str('order_time:1')),
@@ -279,14 +277,14 @@ def create_order_steps(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
 
-    elif key == 'order_time':
+    elif property_name == 'order_time':
         today = date.today()
         days = calendar.monthrange(today.year, today.month)[1]
-        end_date = today + timedelta(days=days * int(id))
+        end_date = today + timedelta(days=days * int(property_value))
         context.user_data['start_date'] = "{}/{}/{}".format(today.year, today.month, today.day)
         context.user_data['end_date'] = "{}/{}/{}".format(end_date.year, end_date.month, end_date.day)
 
-        msg_text = create_order_info_messgaes(key, context.user_data)
+        msg_text = create_order_info_messgaes(property_name, context.user_data)
         keyboard = [
                     [
                         InlineKeyboardButton("Изменить", callback_data=str('change_order:1')),
@@ -296,11 +294,11 @@ def create_order_steps(update: Update, context: CallbackContext):
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
     
-    elif key == 'change_order':
+    elif property_name == 'change_order':
         context.user_data.clear()
         create_order(update, context)
         
-    elif key == 'order_make_payment':
+    elif property_name == 'order_make_payment':
         start_without_shipping_callback(query, context)
         return PERSONAL_ACCOUNT
     return CREATE_ORDER
@@ -382,8 +380,7 @@ if __name__ == '__main__':
     load_dotenv()
     telegram_bot_token = os.environ['TELEGRAM_TOKEN']
 
-    if not os.path.exists('json_files/users_order.json'):
-        create_database()
+    database_create_users_order()
 
     updater = Updater(telegram_bot_token, use_context=True)
     dispatcher = updater.dispatcher
