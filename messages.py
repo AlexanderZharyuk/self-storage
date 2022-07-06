@@ -1,9 +1,4 @@
-from ast import If
-import json
-
 from general_functions import get_orders, get_warehouse_address
-
-from datetime import datetime
 
 
 def create_start_message_new_user(username: str) -> str:
@@ -91,15 +86,16 @@ def create_boxes_list_message(boxes: list) -> str:
 
 def create_order_info_messgaes(key: str, user_data: dict) -> str:
     """Создание информационного сообщения в процессе формирования заказа"""
+    message = None
     if key == 'warehouse_id':
-        info_msg = f"""
+        message = f"""
 🏠 Адрес: {get_warehouse_address(user_data['warehouse_id'])}
 
 Выберите необходимый размер бокса:
 """
 
     if key == 'box_size':
-        info_msg = f"""
+        message = f"""
 🏠 Адрес: {get_warehouse_address(user_data['warehouse_id'])}
 📏 Размер бокса: {user_data['box_size']}
 
@@ -107,7 +103,7 @@ def create_order_info_messgaes(key: str, user_data: dict) -> str:
 """
 
     if key == 'box_type':
-        info_msg = f"""
+        message = f"""
 🏠 Адрес: {get_warehouse_address(user_data['warehouse_id'])}
 📏 Размер бокса: {user_data['box_size']}
 ☢ Специфичный бокс: {user_data['box_type']}
@@ -115,7 +111,7 @@ def create_order_info_messgaes(key: str, user_data: dict) -> str:
 """
 
     if key == 'box_id':
-        info_msg = f"""
+        message = f"""
 🏠 Адрес: {get_warehouse_address(user_data['warehouse_id'])}
 📏 Размер бокса: {user_data['box_size']}
 ☢ Специфичный бокс: {user_data['box_type']}
@@ -129,7 +125,7 @@ def create_order_info_messgaes(key: str, user_data: dict) -> str:
     if key == 'order_time' or key == 'order_make_payment':
         if key == 'order_time':
             user_data['rent_price'] = int(user_data['box_price']) * int(user_data['order_time'])
-            info_msg = f"""
+            message = f"""
 🏠 Адрес: {get_warehouse_address(user_data['warehouse_id'])}
 📏 Размер бокса: {user_data['box_size']}
 ☢ Специфичный бокс: {user_data['box_type']}
@@ -141,7 +137,7 @@ def create_order_info_messgaes(key: str, user_data: dict) -> str:
 📝 Всё верно?
 """
         else:
-            info_msg = '✅ Ваш заказ принят\n📞 В ближайшее время с вами свяжется менеджер' \
+            message = '✅ Ваш заказ принят\n📞 В ближайшее время с вами свяжется менеджер' \
                        '\n🤝 Спасибо, что доверили нам свои вещи!'
 
-    return info_msg
+    return message
