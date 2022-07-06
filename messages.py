@@ -141,4 +141,3 @@ def create_order_info_messgaes(key: str, user_data: dict) -> str:
                        '\n🤝 Спасибо, что доверили нам свои вещи!'
 
     return message
-
