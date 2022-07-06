@@ -131,8 +131,7 @@ def end_auth(update: Update, context: CallbackContext):
 def cancel_auth(update: Update, context: CallbackContext) -> None:
     message_keyboard = [['✅ Согласен', '❌ Не согласен']]
     markup = ReplyKeyboardMarkup(message_keyboard, resize_keyboard=True, one_time_keyboard=True)
-    update.message.reply_text('Извините, тогда мы не сможем пропустить вас дальше. '
-                              'Чтобы изменить решение - напишите /start.', reply_markup=markup)
+    update.message.reply_text('Извините, тогда мы не сможем пропустить вас дальше.', reply_markup=markup)
     return ConversationHandler.END
 
 
