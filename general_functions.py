@@ -1,3 +1,4 @@
+
 import configparser
 import os
 import random
@@ -6,10 +7,12 @@ import json
 from string import digits
 from geopy import distance
 
+
 from validate_exceptions import *
 
 CONFIG = configparser.ConfigParser()
 CONFIG.read('config.ini')
+
 
 
 def create_database() -> None:

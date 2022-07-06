@@ -1,23 +1,25 @@
 import calendar
 import io
+import os
+import json
 import qrcode
 
 
 from datetime import date, timedelta
 
+
 from dotenv import load_dotenv
-from telegram import (Update, ReplyKeyboardMarkup, KeyboardButton,
-                      InlineKeyboardMarkup, InlineKeyboardButton,
-                      LabeledPrice)
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, \
+    InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           Filters, CallbackContext, ConversationHandler,
-                          CallbackQueryHandler, PreCheckoutQueryHandler)
+                          CallbackQueryHandler)
 
-from messages import *
-from general_functions import *
+from messages import create_start_message_new_user, create_start_message_exist_user, create_info_message, create_info_message_for_qr
+from general_functions import is_new_user, get_orders_ids, is_valid_phone_number, is_fullname_valid, clear_phone_number
 from validate_exceptions import *
 
-USER_FULLNAME, PHONE_NUMBER, END_AUTH, PERSONAL_ACCOUNT, ORDERS, USER_BOXES, CREATE_ORDER = range(7)
+USER_FULLNAME, PHONE_NUMBER, END_AUTH, PERSONAL_ACCOUNT, ORDERS, USER_BOXES = range(6)
 
 
 def start(update: Update, context: CallbackContext) -> int:
@@ -25,7 +27,7 @@ def start(update: Update, context: CallbackContext) -> int:
 
     if is_new_user(user.id):
         message_keyboard = [['✅ Согласен', '❌ Не согласен']]
-        markup = ReplyKeyboardMarkup(message_keyboard, resize_keyboard=True, one_time_keyboard=True)
+        markup = ReplyKeyboardMarkup(message_keyboard, resize_keyboard=True)
 
         with open(CONFIG['DEFAULT']['PRIVACY_POLICY_STATEMENT'], 'rb') as image:
             user_agreement_pdf = image.read()
@@ -116,10 +118,12 @@ def end_auth(update: Update, context: CallbackContext):
             "orders": []
         }
 
+
         with open(CONFIG['DEFAULT']['DATABASE_PATH'], 'r', encoding="utf-8") as json_file:
             database_without_new_user = json.load(json_file)
 
         database_without_new_user.append(user)
+
 
         with open(CONFIG['DEFAULT']['DATABASE_PATH'], 'w', encoding="utf-8") as json_file:
             json.dump(database_without_new_user, json_file, indent=4, ensure_ascii=False)
@@ -129,6 +133,7 @@ def end_auth(update: Update, context: CallbackContext):
 
 
 def cancel_auth(update: Update, context: CallbackContext) -> None:
+
     message_keyboard = [['✅ Согласен', '❌ Не согласен']]
     markup = ReplyKeyboardMarkup(message_keyboard, resize_keyboard=True, one_time_keyboard=True)
     update.message.reply_text('Извините, тогда мы не сможем пропустить вас дальше.', reply_markup=markup)
@@ -187,6 +192,7 @@ def make_qr(order_info):
     qr_code.save(img_byte_arr, format='PNG')
     img_byte_arr = img_byte_arr.getvalue()
     return img_byte_arr
+
 
 
 def create_order(update: Update, context: CallbackContext) -> int:
@@ -389,9 +395,6 @@ def main():
     load_dotenv()
     telegram_bot_token = os.environ['TELEGRAM_TOKEN']
 
-    if not os.path.exists('json_files/users_order.json'):
-        create_database()
-
     updater = Updater(telegram_bot_token, use_context=True)
     dispatcher = updater.dispatcher
 
@@ -440,7 +443,6 @@ def main():
                 MessageHandler(
                     Filters.regex(r'Заказ #'), get_box_info
                 ),
-                CallbackQueryHandler(publish_qr)
             ],
             USER_BOXES: [
                 MessageHandler(
@@ -467,9 +469,7 @@ def main():
     dispatcher.add_handler(MessageHandler(Filters.regex('^❌ Не согласен$'), cancel_auth))
     dispatcher.add_handler(conv_handler)
     dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(PreCheckoutQueryHandler(precheckout_callback))
-    dispatcher.add_handler(MessageHandler(Filters.successful_payment, successful_payment_callback))
-    dispatcher.add_handler(CallbackQueryHandler(successful_payment_callback))
+    dispatcher.add_handler(CallbackQueryHandler(publish_qr))
 
     updater.start_polling()
     updater.idle()
