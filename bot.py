@@ -1,6 +1,7 @@
+import calendar
 import io
 import qrcode
-import calendar
+
 
 from datetime import date, timedelta
 
@@ -26,7 +27,7 @@ def start(update: Update, context: CallbackContext) -> int:
         message_keyboard = [['✅ Согласен', '❌ Не согласен']]
         markup = ReplyKeyboardMarkup(message_keyboard, resize_keyboard=True, one_time_keyboard=True)
 
-        with open('documents/sample.pdf', 'rb') as image:
+        with open(CONFIG['DEFAULT']['PRIVACY_POLICY_STATEMENT'], 'rb') as image:
             user_agreement_pdf = image.read()
 
         greeting_msg = create_start_message_new_user(user.name)
@@ -53,8 +54,8 @@ def get_fullname(update: Update, context: CallbackContext) -> int:
 def get_phone_number(update: Update, context: CallbackContext):
     user_data = context.user_data
     text = update.message.text
-    category = user_data['choice']
-    user_data[category] = text
+    user_choice = user_data['choice']
+    user_data[user_choice] = text
     del user_data['choice']
 
     user_fullname = user_data['Имя и фамилия'].split()
@@ -97,8 +98,8 @@ def end_auth(update: Update, context: CallbackContext):
         update.message.reply_text('Номер начинается не на +7...')
         return get_phone_number(update, context)
 
-    category = user_data['choice']
-    user_data[category] = text
+    user_choice = user_data['choice']
+    user_data[user_choice] = text
 
     if 'choice' in user_data:
         del user_data['choice']
@@ -115,12 +116,12 @@ def end_auth(update: Update, context: CallbackContext):
             "orders": []
         }
 
-        with open('json_files/users_order.json', 'r', encoding="utf-8") as json_file:
+        with open(CONFIG['DEFAULT']['DATABASE_PATH'], 'r', encoding="utf-8") as json_file:
             database_without_new_user = json.load(json_file)
 
         database_without_new_user.append(user)
 
-        with open('json_files/users_order.json', 'w', encoding="utf-8") as json_file:
+        with open(CONFIG['DEFAULT']['DATABASE_PATH'], 'w', encoding="utf-8") as json_file:
             json.dump(database_without_new_user, json_file, indent=4, ensure_ascii=False)
 
         user_data.clear()
@@ -193,18 +194,22 @@ def create_order(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
 
     warehouses_address = get_warehouses_address()
-    inline_text = '🏠 Выберите расположение ближайшего для вас склада:\n'
+    choice_text = '🏠 Выберите расположение ближайшего для вас склада:\n'
     keyboard = [[]]
     for warehouse in warehouses_address:
-           inline_text = inline_text + warehouse['warehouse_id'] + ') ' +  warehouse['warehouse_address'] + '\n'
-           keyboard[0].append(InlineKeyboardButton(warehouse['warehouse_id'], callback_data=str('warehouse_id:' + warehouse['warehouse_id'])))
+        choice_text += warehouse['warehouse_id'] + ') ' + \
+                       warehouse['warehouse_address'] + '\n'
+        keyboard[0].append(
+            InlineKeyboardButton(warehouse['warehouse_id'],
+                                 callback_data=str('warehouse_id:' + warehouse['warehouse_id']))
+           )
     inline_markup = InlineKeyboardMarkup(keyboard)
 
     if query:
         update.callback_query.answer()
-        update.callback_query.edit_message_text(text=inline_text, reply_markup=inline_markup)
+        update.callback_query.edit_message_text(text=choice_text, reply_markup=inline_markup)
     else:
-        msg_text = ('📝 Оформление заказа:')
+        msg_text = '📝 Оформление заказа:'
         message_keyboard = [
             [
                 KeyboardButton('⬅️ Вернуться в главное меню'),
@@ -214,7 +219,7 @@ def create_order(update: Update, context: CallbackContext) -> int:
         markup = ReplyKeyboardMarkup(message_keyboard, one_time_keyboard=False, resize_keyboard=True)
         update.effective_message.reply_text(msg_text, reply_markup=markup)
 
-        update.effective_message.reply_text(text=inline_text, reply_markup=inline_markup)
+        update.effective_message.reply_text(text=choice_text, reply_markup=inline_markup)
     return CREATE_ORDER
     
 
@@ -251,13 +256,13 @@ def create_order_steps(update: Update, context: CallbackContext):
         msg_header = create_order_info_messgaes(property_name, context.user_data)
         boxes_list = get_warehouses_boxes(context.user_data)
         msg_boxes_list = create_boxes_list_message(boxes_list)
-        msg_text= "".join([msg_header, msg_boxes_list]) 
+        msg_text = "".join([msg_header, msg_boxes_list])
         keyboard = [
             []
         ]
         
         for box in boxes_list:
-            keyboard[0].append(InlineKeyboardButton(box['box_id'], callback_data=str('box_id:' + box['box_id'])),)
+            keyboard[0].append(InlineKeyboardButton(box['box_id'], callback_data=str('box_id:' + box['box_id'])))
         reply_markup = InlineKeyboardMarkup(keyboard)
         query.edit_message_text(text=msg_text, reply_markup=reply_markup)
         
@@ -314,7 +319,9 @@ def location(update: Update, context: CallbackContext):
     keyboard = [
         [
             InlineKeyboardButton("Изменить", callback_data=str('change_warehouse')),
-            InlineKeyboardButton("Выбрать", callback_data=str('warehouse_id:' + warehouses_location['warehouse_id'])),
+            InlineKeyboardButton("Выбрать",
+                                 callback_data=str('warehouse_id:' +
+                                                   warehouses_location['warehouse_id'])),
         ]
     ]
     inline_markup = InlineKeyboardMarkup(keyboard)
@@ -330,7 +337,8 @@ def start_without_shipping_callback(update, context: CallbackContext) -> None:
     summary = None
     for string in strings:
         if string.startswith('#️⃣ Номер'):
-            box_number = string[string.find(':') + 2:]
+            start_index = string.find(':') + 2
+            box_number = string[start_index:]
         if string.startswith('💰 Стоимость'):
             start_index = string.find(':') + 1
             end_index = string.find('RUB')
@@ -369,8 +377,8 @@ def precheckout_callback(update: Update, context: CallbackContext) -> None:
 
 
 def successful_payment_callback(update: Update, context: CallbackContext) -> None:
-    msg_text = create_order_info_messgaes('order_make_payment', context.user_data)
-    update.message.reply_text(msg_text)
+    message = create_order_info_messgaes('order_make_payment', context.user_data)
+    update.message.reply_text(message)
     
     user_id = update.effective_user.id
     add_new_user_order(user_id, context.user_data)
@@ -378,7 +386,7 @@ def successful_payment_callback(update: Update, context: CallbackContext) -> Non
     start(update, context)
 
 
-if __name__ == '__main__':
+def main():
     load_dotenv()
     telegram_bot_token = os.environ['TELEGRAM_TOKEN']
 
@@ -466,3 +474,7 @@ if __name__ == '__main__':
 
     updater.start_polling()
     updater.idle()
+
+
+if __name__ == '__main__':
+    main()
