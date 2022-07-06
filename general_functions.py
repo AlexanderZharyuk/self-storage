@@ -1,34 +1,56 @@
+import configparser
 import os
-import json
 import random
+import json
 
 from string import digits
 from geopy import distance
 
 from validate_exceptions import *
 
+CONFIG = configparser.ConfigParser()
+CONFIG.read('config.ini')
 
-def create_database():
-    os.makedirs('json_files', exist_ok=True)
 
-    with open('json_files/users_order.json', 'w', encoding='"utf-8"') as file:
+def create_database() -> None:
+    """Создание файла базы данных"""
+    db_folder = os.path.split(CONFIG['DEFAULT']['DATABASE_PATH'])[0]
+    os.makedirs(db_folder, exist_ok=True)
+
+    with open(CONFIG['DEFAULT']['DATABASE_PATH'], 'w', encoding='"utf-8"') as file:
         empty_base = []
         json.dump(empty_base, file)
 
 
-def is_new_user(user_id: int) -> bool:
-    """Функция возвращает True или False в зависимости от того - есть ли пользователь в базе данных"""
-    with open('json_files/users_order.json', 'r', encoding="utf-8") as file:
+def load_warehouses() -> list:
+    """Загрузка данных о складах"""
+    warehouses_info_folder = os.path.split(CONFIG['DEFAULT']['DATABASE_PATH'])[0]
+    os.makedirs(warehouses_info_folder, exist_ok=True)
+
+    with open(CONFIG['DEFAULT']['WAREHOUSES_INFO_PATH'], 'r', encoding='utf-8') as json_file:
+        warehouses = json.load(json_file)
+
+    return warehouses
+
+
+def load_users() -> list:
+    """Загрузка данных об юзерах"""
+    with open(CONFIG['DEFAULT']['DATABASE_PATH'], 'r', encoding="utf-8") as file:
         users = json.load(file)
 
+    return users
+
+
+def is_new_user(user_id: int) -> bool:
+    """Функция возвращает True или False в зависимости от того - есть ли пользователь в базе данных"""
+    users = load_users()
     users_ids = [user['user_id'] for user in users if user['user_id'] == user_id]
     return not bool(users_ids)
 
 
 def get_orders(user_id: int) -> list:
     """Функция для получения списка заказов пользователя"""
-    with open('json_files/users_order.json', 'r', encoding="utf-8") as file:
-        users = json.load(file)
+    users = load_users()
     user_orders = [user['orders'] for user in users if user['user_id'] == user_id]
     return user_orders
 
@@ -74,30 +96,27 @@ def is_fullname_valid(fullname: list) -> bool:
     return True
 
 
-def get_warehouse_address(warehouse_id):
+def get_warehouse_address(warehouse_id) -> str:
     """Функция для получения адреса по номеру склада"""
-    with open('json_files/warehouses.json', 'r', encoding="utf-8") as file:
-        warehouses = json.load(file)
-        for warehouse in warehouses:
-            if warehouse_id == warehouse['warehouse_id']:
-                address = warehouse['warehouse_address']
-                return address
+    warehouses = load_warehouses()
+    for warehouse in warehouses:
+        if warehouse_id == warehouse['warehouse_id']:
+            address = warehouse['warehouse_address']
+            return address
 
 
 def get_warehouses_address() -> list:
     """Функция для получения списка адресов складов"""
-    with open('json_files/warehouses.json', 'r', encoding='utf-8') as json_file:
-        warehouses = json.load(json_file)
+    warehouses = load_warehouses()
     warehouses_address = [
-        dict({'warehouse_id': warehouse['warehouse_id'], 'warehouse_address': warehouse['warehouse_address']}) for
-        warehouse in warehouses]
+        dict({'warehouse_id': warehouse['warehouse_id'],
+              'warehouse_address': warehouse['warehouse_address']}) for warehouse in warehouses]
     return warehouses_address
 
 
 def get_warehouses_boxes(params_by_user: dict) -> list:
     """Функция для получения списка всех доступных боксов с указаннными пользователем параметрами на складе"""
-    with open('json_files/warehouses.json', 'r', encoding='utf-8') as json_file:
-        warehouses = json.load(json_file)
+    warehouses = load_warehouses()
     boxes = []
 
     warehouse_boxes = [warehouse['boxes'] for warehouse in warehouses
@@ -113,9 +132,7 @@ def get_warehouses_boxes(params_by_user: dict) -> list:
 
 def get_box_floor(params_by_user: dict) -> list:
     """Функция для получения этажа на котором находится выбранный бокс"""
-    with open('json_files/warehouses.json', 'r', encoding='utf-8') as json_file:
-        warehouses = json.load(json_file)
-
+    warehouses = load_warehouses()
     warehouse_boxes = [warehouse['boxes'] for warehouse in warehouses if
                        warehouse['warehouse_id'] == params_by_user['warehouse_id']]
     for boxes_list in warehouse_boxes:
@@ -126,10 +143,9 @@ def get_box_floor(params_by_user: dict) -> list:
 
 def get_box_price(params_by_user: dict) -> list:
     """Функция для получения стоимости выбранного бокса"""
-    with open('json_files/warehouses.json', 'r', encoding='utf-8') as json_file:
-        warehouses = json.load(json_file)
-
-    warehouse_boxes = [warehouse['boxes'] for warehouse in warehouses if warehouse['warehouse_id'] == params_by_user['warehouse_id']]
+    warehouses = load_warehouses()
+    warehouse_boxes = [warehouse['boxes'] for warehouse in warehouses
+                       if warehouse['warehouse_id'] == params_by_user['warehouse_id']]
     for boxes_list in warehouse_boxes:
         for box in boxes_list:
             if box['box_id'] == params_by_user['box_id']:
@@ -137,7 +153,7 @@ def get_box_price(params_by_user: dict) -> list:
 
                 
 def create_unique_qr() -> str:
-    with open('json_files/users_order.json', 'r') as file:
+    with open(CONFIG['DEFAULT']['DATABASE_PATH'], 'r') as file:
         all_users = json.load(file)
 
     all_orders = [order['orders'] for order in all_users]
@@ -146,18 +162,16 @@ def create_unique_qr() -> str:
         for qr_code in user_order:
             all_qr_codes.append(int(qr_code['qr_code']))
 
-    random_qr = random.randint(10000, 99999)
-    while random_qr in all_qr_codes:
-        random_qr = random.randint(10000, 99999)
+    random_qr_numbers = random.randint(10000, 99999)
+    while random_qr_numbers in all_qr_codes:
+        random_qr_numbers = random.randint(10000, 99999)
 
-    return str(random_qr)
+    return str(random_qr_numbers)
 
 
 def add_new_user_order(user_id: int, order_params: dict):
     """Функция добавления нового заказа в базу"""
-    with open('json_files/users_order.json', 'r', encoding="utf-8") as json_file:
-        users = json.load(json_file)
-
+    users = load_users()
     for user in users:
         if user['user_id'] == user_id:
             new_order = {
@@ -170,7 +184,7 @@ def add_new_user_order(user_id: int, order_params: dict):
             }
             user['orders'].append(new_order)
 
-    with open('json_files/users_order.json', 'w', encoding="utf-8") as json_file:
+    with open(CONFIG['DEFAULT']['DATABASE_PATH'], 'w', encoding="utf-8") as json_file:
         json.dump(users, json_file, indent=4, ensure_ascii=False)
 
     reserve_box_in_warehouse(order_params)
@@ -178,29 +192,25 @@ def add_new_user_order(user_id: int, order_params: dict):
 
 def reserve_box_in_warehouse(order_params: dict):
     """Функция помечает оплаченный пользователем бокс как зарезервированный"""
-    with open('json_files/warehouses.json', 'r', encoding='utf-8') as json_file:
-        warehouses = json.load(json_file)
-
+    warehouses = load_warehouses()
     for warehouse in warehouses:
         if warehouse['warehouse_id'] == order_params['warehouse_id']:
             for box in warehouse['boxes']:
                 if box['box_id'] == order_params['box_id']:
                     box.update({'box_reserved': True})
 
-    with open('json_files/warehouses.json', 'w', encoding="utf-8") as json_file:
+    with open(CONFIG['DEFAULT']['WAREHOUSES_INFO_PATH'], 'w', encoding="utf-8") as json_file:
         json.dump(warehouses, json_file, indent=4, ensure_ascii=False)
 
 
-def get_warehouses_location(user_pos: tuple) -> list:
+def get_warehouses_location(user_pos: tuple) -> dict:
     """Функция для получения ближайшего склада до пользователя на основе его местоположения"""
-    with open('json_files/warehouses.json', 'r', encoding='utf-8') as json_file:
-        warehouses = json.load(json_file)
-    
+    warehouses = load_warehouses()
     nearest_warehouses = []
     for warehouse in warehouses:
         new_location = dict()
         new_location["warehouse_id"] = warehouse['warehouse_id']
-        new_location["warehouse_address"] =  warehouse['warehouse_address']
+        new_location["warehouse_address"] = warehouse['warehouse_address']
         new_location["distance"] = distance.distance(
             (user_pos[0], user_pos[1]),
             (warehouse['coordiantes']['latitude'], warehouse['coordiantes']['longitude'])
