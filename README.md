@@ -1,93 +1,89 @@
 # SELF STORAGE PROJECT
 
-Телеграм-бот с арендой складского помещения.
+Telegram bot with warehouse rental.
 
 
-## Навигация по проекту
-* Папки
+## Project navigation
+* Folders
 
-`documents/` - папка с файлами, которые отправляем пользователю, например пользовательское соглашение в пдф формате.
+`documents/` - a folder with files that are sent to the user, for example, a user agreement in pdf format.
 
-`json_files/` - папка с json-файлами, там хранится данные о складах, а также там будет формироваться БД.
+`json_files/` - a folder with json files, warehouse data is stored there, and a database will be formed there.
 
-* Файлы
+* Files
 
-`bot.py` - Главный исполняемый файл, через него происходит запуск бота, а также все обработчики бота хранятся в этом файле.
+`bot.py` - The main executable file through which the bot is launched, and all bot handlers are stored in this file.
 
-`config.ini` - Конфигурационный файл с вашими настройками.
+`config.ini` - Configuration file with your settings.
 
-`general_functions.py` - Файл с общими функциями для работы бота.
+`general_functions.py` - A file with general functions for the bot to work with.
 
-`messages.py` - Файл с сообщениями для пользователей.
+`messages.py` - File with messages for users.
 
-`Procfile` - Файл для деплоя бота на хостинге.
+`Procfile` - File for bot deployment on hosting.
 
-`requirements.txt` - Файл с используемыми библиотеками проекта.
+`requirements.txt` - File with used project libraries.
 
-`validate_exceptions.py` - Файл с кастомными ошибками для валидации.
+`validate_exceptions.py` - Custom errors for validation.
 
-### Описание бота
+### Description of the bot
 
-У бота будет 3 главные ветки - регистрация, заказ и личный кабинет. В каждой из веток свой функционал:
+The bot will have 3 main branches - registration, order and personal account. Each branch has its own functionality:
 
-1. Регистрация - Пользователь должен принять соглашение об обработке данных и далее заполнить обязательные данные - 
-ФиО и номер телефона, после чего нажать на кнопку регистрации и если она прошла успешно - он записывается в БД.
-2. Заказ - При нажатии на кнопку заказ выдается 5 складов с лимитами -> Пользователь выбрал склад -> 
-Указывает объем заказа -> Нужно ли хранить специфические вещи -> Выдается список подходящих боксов ->
-На какой срок хранение -> Пользователь выбирает бокс -> Уточняем информацию, если все верно -> Оплата
-3. Личный кабинет - выдается список заказов и кнопка "Открыть бокс" -> при нажатии выкидывает QR-код для получения бокса
+1. Registration - The user must accept the data processing agreement and then fill in the required data -
+Full name and phone number, then click on the registration button and if it was successful, it is recorded in the database.
+2. Order - When you click on the order button, 5 warehouses with limits are issued -> The user has selected a warehouse ->
+Indicates the order quantity -> Whether specific items need to be stored -> A list of matching boxes is displayed ->
+For how long is storage -> The user selects a box -> Refine the information if everything is correct -> Payment
+3. Personal account - a list of orders is displayed and the "Open box" button -> when pressed, it throws out a QR code to receive a box
 
-### Реализованные фичи проекта
+### Implemented project features
 
-- [x] База данных
-- [x] Регистрация
-- [x] Заказ
-- [x] Личный кабинет
-- [x] QR-коды заказов
-- [x] Нахождение ближайшего склада к пользователю
-- [x] Оплата заказа
+- [x] Database
+- [x] Registration
+- [x] Order
+- [x] Personal account
+- [x] order QR codes
+- [x] Find the nearest warehouse to the user
+- [x] Order payment
 
-Готовая версия бота, которую можно протестировать: [@BoxStorageBot](https://t.me/BoxStorageBot)
-
-## Настройка проекта под себя
-Вы можете использовать данного бота для своих нужд. Для этого ниже описаны
-шаги по настройке бота:
+## Setting up the project for yourself
+You can use this bot for your needs. To do this, below are
+bot setup steps:
 
 
-#### 1. Установите необходимые библиотеки
+#### 1. Install required libraries
 
-Бот написан при помощи библиотеки [python-telegram-bot](https://pypi.org/project/python-telegram-bot/) v13.2. Для установки
-всех необходимых библиотек напишите команду:
-``` 
-pip install -r requierements.txt
+The bot is written using the [python-telegram-bot](https://pypi.org/project/python-telegram-bot/) v13.2 library. For installation
+all the necessary libraries, write the command:
+```
+pip install -r requirements.txt
 ```
 
-Ссылка на примеры с использованием библиотеки на [GitHub](https://github.com/python-telegram-bot/python-telegram-bot/tree/v13.x).
-
-#### 2. Создайте `.env`-файл.
-В данном файле будут храниться ваши секретные данные, заполните файл следующим образом:
+#### 2. Create a `.env` file.
+This file will store your secret data, fill in the file as follows:
 
 ```
-TELEGRAM_TOKEN={TOKEN} | Токен вашего бота в ТГ
-PAYMENT_TOKEN={PAYMENT_TOKEN} | Токен вашего эквайринга, его также можно получить в @BotFather во вкладе payments
+TELEGRAM_TOKEN={TOKEN} | Your bot token in TG
+PAYMENT_TOKEN={PAYMENT_TOKEN} | Your acquiring token, you can also get it in @BotFather in the payments tab
 ```
 
-#### 3. Настройте конфиг-файл.
-В репозитории проекта есть файл `config.ini` - в нем хранятся ваши настройки проекта, а именно пути до файлов С БД и Пользовательским соглашением.
-Сейчас конфиг файл заполнен, вы можете с ним ознакомиться и оставить его как есть или поменять по примеру, если вам это необходимо.
+#### 3. Set up the config file.
+The project repository has a `config.ini` file - it stores your project settings, namely the paths to the DB and User Agreement files.
+Now the config file is full, you can familiarize yourself with it and leave it as it is or change it according to the example if you need it.
 
-#### 4. Заполните информацию о ваших складах.
-В файле `json_files/warehouses.json` находится информация по вашим складам, заполните ее по примеру уже существующего файла.
-Пожалуйста, не меняйте структуру файла, в данный момент существующий файл является примером.
+#### 4. Fill in the information about your warehouses.
+The file `json_files/warehouses.json` contains information about your warehouses, fill it in like an existing file.
+Please do not change the structure of the file, the currently existing file is an example.
 
-#### 5. Запустите вашего бота.
-После того, как вы прошли все ваши шаги - запустите вашего бота командой:
+#### 5. Run your bot.
+After you have gone through all your steps - run your bot with the command:
 
 ```
 python3 bot.py
 ```
 
-## Авторы
+## The authors
 * [Alexander Zharyuk](https://github.com/AlexanderZharyuk/)
 * [Elena LeenyTheBear](https://github.com/leenythebear)
 * [Kirill Rudenko](https://github.com/rudenko-ks)
